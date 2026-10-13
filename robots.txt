@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /config/
+Disallow: /contato.php
+
+Sitemap: https://pignoroconsultoria.com.br/sitemap.xml
