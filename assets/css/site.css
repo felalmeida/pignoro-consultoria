@@ -1,18 +1,19 @@
 /* Pignoro Consultoria */
 
+/* Libre Franklin (SIL Open Font License, ver assets/fonts/OFL-LibreFranklin.txt), pesos de 100 a 900 */
 @font-face {
-    font-family: "Inter";
-    src: url("../fonts/inter-latin-wght.woff2") format("woff2");
+    font-family: "Libre Franklin";
+    src: url("../fonts/libre-franklin-wght.woff2") format("woff2");
     font-weight: 100 900;
     font-style: normal;
     font-display: swap;
 }
 
 @font-face {
-    font-family: "Space Grotesk";
-    src: url("../fonts/space-grotesk-latin-wght.woff2") format("woff2");
-    font-weight: 300 700;
-    font-style: normal;
+    font-family: "Libre Franklin";
+    src: url("../fonts/libre-franklin-italic-wght.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: italic;
     font-display: swap;
 }
 
@@ -36,8 +37,8 @@
     --on-dark-soft: #aab4c2;
     --line-dark: rgba(243, 230, 196, 0.14);
 
-    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-    --font-head: "Space Grotesk", "Inter", system-ui, sans-serif;
+    --font-body: "Libre Franklin", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --font-head: "Libre Franklin", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
     --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
     --radius: 14px;

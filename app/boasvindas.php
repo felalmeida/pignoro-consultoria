@@ -55,7 +55,7 @@ function WelcomeMail(array $v_Client, string $v_Link, string $v_SiteUrl, string 
     $Subtitulo = E($Tx('Consultoria Financeira'));
     $Endereco = E($Tx('Av. Paulista, 1106, 16º andar, Bela Vista, São Paulo - SP'));
 
-    $Font = "font-family:'Segoe UI',Helvetica,Arial,sans-serif;";
+    $Font = "font-family:'Libre Franklin','Segoe UI',Helvetica,Arial,sans-serif;";
     $Mono = "font-family:Consolas,Menlo,'Courier New',monospace;";
     $Itens = [
         [$Tx('Arquivos protegidos'), $Tx('Documentos cifrados de ponta a ponta, que só você consegue abrir.')],
@@ -85,7 +85,7 @@ function WelcomeMail(array $v_Client, string $v_Link, string $v_SiteUrl, string 
 
 <tr><td class="px" style="background-color:#0b1622;padding:22px 40px;border-bottom:1px solid #1f2c3b;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-        <td width="44" height="44" valign="middle" style="width:44px;height:44px;"><img src="{$Site}assets/img/icone-96.png" width="44" height="44" alt="Pignoro" style="display:block;width:44px;height:44px;border:0;{$Font}font-size:12px;color:#d9b866;"></td>
+        <td width="44" height="44" valign="middle" style="width:44px;height:44px;"><img src="{$Site}assets/img/icone-96.png?v=2" width="44" height="44" alt="Pignoro" style="display:block;width:44px;height:44px;border:0;{$Font}font-size:12px;color:#d9b866;"></td>
         <td style="padding-left:12px;">
             <div style="{$Font}font-size:19px;line-height:22px;font-weight:700;color:#eef0f3;">Pignoro</div>
             <div style="{$Font}font-size:12px;line-height:16px;letter-spacing:0.5px;color:#aab4c2;">$Subtitulo</div>

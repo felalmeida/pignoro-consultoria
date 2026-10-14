@@ -704,16 +704,16 @@ function PageHead(string $v_Title, string $v_Active = ''): void
         . '<meta name="robots" content="noindex, nofollow">'
         . '<meta name="csrf" content="' . E(CsrfToken()) . '">'
         . '<title>' . E($v_Title) . ' | Pignoro</title>'
-        . '<link rel="icon" href="' . $Root . 'assets/img/icone-32.png" sizes="32x32" type="image/png">'
-        . '<link rel="apple-touch-icon" href="' . $Root . 'assets/img/icone-180.png">'
-        . '<link rel="stylesheet" href="' . $Root . 'assets/css/site.css?v=6">'
+        . '<link rel="icon" href="' . $Root . 'assets/img/icone-32.png?v=2" sizes="32x32" type="image/png">'
+        . '<link rel="apple-touch-icon" href="' . $Root . 'assets/img/icone-180.png?v=2">'
+        . '<link rel="stylesheet" href="' . $Root . 'assets/css/site.css?v=7">'
         . '<link rel="stylesheet" href="' . $Root . 'assets/css/portal.css?v=4">'
         . '<script defer src="' . $Root . 'assets/js/portal.js?v=5"></script>'
         . '</head><body class="portal" data-api="' . $Root . 'cliente/api.php"'
         . ($Lang !== 'pt' ? ' data-textos="' . E((string) json_encode(Dictionary($Lang, 'js'), JSON_UNESCAPED_UNICODE)) . '"' : '') . '>';
 
     echo '<header class="portal-header"><div class="container portal-header-inner">'
-        . '<a class="brand" href="' . E(PublicRoot()) . '"><img src="' . $Root . 'assets/img/icone-96.png" alt="" width="32" height="32">'
+        . '<a class="brand" href="' . E(PublicRoot()) . '"><img src="' . $Root . 'assets/img/icone-96.png?v=2" alt="" width="32" height="32">'
         . '<span class="brand-text"><strong>Pignoro</strong><span>' . E(T('Área do cliente')) . '</span></span></a>'
         . '<div class="portal-user"><nav class="lang-switch" aria-label="' . E(T('Idioma')) . '">';
     foreach (IDIOMAS as $Code => $Name)
