@@ -1929,3 +1929,67 @@ svg {
 .page-legal .site-header {
     background: var(--ink-900);
 }
+
+/* ---------- aviso de cookies ---------- */
+
+.cookie-banner {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    z-index: 60;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 24px;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 18px 22px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--on-dark);
+    background: var(--ink-800);
+    border: 1px solid var(--line-dark);
+    border-radius: var(--radius);
+    box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.6);
+}
+
+.cookie-banner[hidden] {
+    display: none;
+}
+
+.cookie-banner p {
+    flex: 1 1 320px;
+    color: var(--on-dark-soft);
+}
+
+.cookie-banner a {
+    color: var(--cyan);
+}
+
+.cookie-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* recusar e aceitar com o mesmo peso visual */
+.cookie-btn {
+    min-width: 110px;
+    color: var(--ink-900);
+    background: var(--cyan);
+    border-color: var(--cyan);
+}
+
+.footer-legal .link-button {
+    padding: 0;
+    font: inherit;
+    color: var(--on-dark-soft);
+    text-decoration: underline;
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.footer-legal .link-button:hover {
+    color: var(--on-dark);
+}

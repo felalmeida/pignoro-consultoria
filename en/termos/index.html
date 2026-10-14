@@ -16,9 +16,9 @@
     <link rel="apple-touch-icon" href="../../assets/img/icone-180.png">
     <link rel="preload" href="../../assets/fonts/inter-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="../../assets/fonts/space-grotesk-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="../../assets/css/site.css?v=5">
+    <link rel="stylesheet" href="../../assets/css/site.css?v=6">
     <script defer src="../../assets/js/config.js?v=4"></script>
-    <script defer src="../../assets/js/site.js?v=6"></script>
+    <script defer src="../../assets/js/site.js?v=7"></script>
 </head>
 
 <body class="page-legal">
@@ -128,15 +128,16 @@
             <p>Like other websites, we collect and use information contained in advertisements, including your IP (Internet Protocol) address, your ISP (Internet Service Provider), the browser you used to visit the website, the duration of your visit and which pages you visited on the website.</p>
 
             <h3>Analytics tools</h3>
-            <p>Audience measurement tools, such as Google Analytics and PostHog, may be used on the public pages of the website. They record, statistically, the pages visited, the duration of the visit, the source of access and interactions with the website, using their own cookies and identifiers. The client area does not load third-party analytics or advertising tools.</p>
+            <p>Audience measurement tools, such as Google Analytics and PostHog, may be used on the public pages of the website, loaded only after you accept them in the cookie notice. They record, statistically, the pages visited, the duration of the visit, the source of access and interactions with the website, using their own cookies and identifiers. The client area does not load third-party analytics or advertising tools.</p>
 
-            <h3>Cookies and web beacons</h3>
+            <h3 id="cookies">Cookies and web beacons</h3>
             <p>We use cookies to store information, such as your personal preferences when you visit the website. The website uses:</p>
             <ul class="legal-list">
                 <li><strong>Client area session cookie</strong> (pignoro_sessao): required to keep the client signed in; it is deleted when the browser is closed or when the client signs out.</li>
                 <li><strong>Language cookie</strong> (pignoro_idioma): keeps the chosen language for up to one year.</li>
                 <li><strong>Browser local storage:</strong> in the client area, keeps the key that opens the client's documents only in the client's browser, until the client clicks Sign out.</li>
-                <li><strong>Analytics and advertising cookies:</strong> set by the third-party tools described above, when enabled.</li>
+                <li><strong>Cookie choice</strong> (pignoro_cookies, local storage): records whether you accepted or declined the measurement tools.</li>
+                <li><strong>Analytics and advertising cookies:</strong> set by the third-party tools described above, only after you accept them in the cookie notice. You can change your choice at any time under "Cookie preferences" in the website footer; if you decline, these tools' cookies are deleted.</li>
             </ul>
             <p>Third-party advertising may also be used on the website. Some of these advertisers may use technologies such as cookies and/or web beacons when advertising on the website, which will cause these advertisers (such as Google through Google AdSense) to also receive your personal information, such as your IP address, ISP, browser, etc.</p>
             <p>You can turn off cookies in your browser settings or by changing the settings of antivirus programs. However, this may change the way you interact with this and other websites. Without the necessary cookies it is not possible to sign in to the client area.</p>
@@ -176,6 +177,7 @@
                 <div class="footer-legal">
                     <p>© <span data-year>2026</span> Pignoro Ltda. | All Rights Reserved</p>
                     <p><a href="./" aria-current="page">Terms of Use and Privacy Policy</a></p>
+                    <p data-cookies hidden><button type="button" class="link-button">Cookie preferences</button></p>
                 </div>
                 <address class="footer-address">
                     Av. Paulista, 1106, 16th floor, Bela Vista, São Paulo - SP, Brazil<br>

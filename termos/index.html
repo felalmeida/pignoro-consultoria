@@ -16,9 +16,9 @@
     <link rel="apple-touch-icon" href="../assets/img/icone-180.png">
     <link rel="preload" href="../assets/fonts/inter-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="../assets/fonts/space-grotesk-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="../assets/css/site.css?v=5">
+    <link rel="stylesheet" href="../assets/css/site.css?v=6">
     <script defer src="../assets/js/config.js?v=4"></script>
-    <script defer src="../assets/js/site.js?v=6"></script>
+    <script defer src="../assets/js/site.js?v=7"></script>
 </head>
 
 <body class="page-legal">
@@ -127,15 +127,16 @@
             <p>Tal como outros sites, coletamos e utilizamos informação contida em anúncios, incluindo seu endereço IP (Internet Protocol), seu ISP (Internet Service Provider), o browser que utilizou ao visitar o site, o tempo de sua visita, e que páginas visitou no site.</p>
 
             <h3>Ferramentas de medição</h3>
-            <p>Nas páginas públicas do site podem ser usadas ferramentas de medição de audiência, como o Google Analytics e o PostHog, que registram de forma estatística as páginas visitadas, o tempo de visita, a origem do acesso e as interações com o site, usando cookies e identificadores próprios. A área do cliente não carrega ferramentas de medição nem de anúncios de terceiros.</p>
+            <p>Nas páginas públicas do site podem ser usadas ferramentas de medição de audiência, como o Google Analytics e o PostHog, carregadas somente depois que você as aceita no aviso de cookies. Elas registram de forma estatística as páginas visitadas, o tempo de visita, a origem do acesso e as interações com o site, usando cookies e identificadores próprios. A área do cliente não carrega ferramentas de medição nem de anúncios de terceiros.</p>
 
-            <h3>Cookies e Web Beacons</h3>
+            <h3 id="cookies">Cookies e Web Beacons</h3>
             <p>Utilizamos cookies para armazenar informações, tais como suas preferências pessoais quando visita o website. No site são usados:</p>
             <ul class="legal-list">
                 <li><strong>Cookie de sessão da área do cliente</strong> (pignoro_sessao): necessário para manter o cliente conectado; é apagado ao fechar o navegador ou ao sair.</li>
                 <li><strong>Cookie de idioma</strong> (pignoro_idioma): guarda o idioma escolhido por até um ano.</li>
                 <li><strong>Armazenamento local do navegador:</strong> na área do cliente, guarda a chave que abre os documentos do cliente apenas no navegador dele, até que ele clique em Sair.</li>
-                <li><strong>Cookies de medição e de anúncios:</strong> definidos pelas ferramentas de terceiros descritas acima, quando ativadas.</li>
+                <li><strong>Escolha sobre cookies</strong> (pignoro_cookies, armazenamento local): guarda se você aceitou ou recusou as ferramentas de medição.</li>
+                <li><strong>Cookies de medição e de anúncios:</strong> definidos pelas ferramentas de terceiros descritas acima, somente depois que você os aceita no aviso de cookies. A escolha pode ser alterada a qualquer momento em "Preferências de cookies", no rodapé do site; ao recusar, os cookies dessas ferramentas são apagados.</li>
             </ul>
             <p>Também é possível que seja utilizada publicidade de terceiros no website. Alguns destes publicitários poderão utilizar tecnologias como cookies e/ou web beacons quando publicitam no site, o que fará com que esses publicitários (como o Google através do Google AdSense) também recebam sua informação pessoal, como o endereço IP, ISP, seu browser, etc.</p>
             <p>Você pode desligar seus cookies nas opções de seu browser, ou efetuando alterações nas ferramentas de programas antivírus. No entanto, isso poderá alterar a forma como interage com este e outros sites. Sem os cookies necessários não é possível entrar na área do cliente.</p>
@@ -175,6 +176,7 @@
                 <div class="footer-legal">
                     <p>© <span data-year>2026</span> Pignoro Ltda. | Todos os Direitos Reservados</p>
                     <p><a href="./" aria-current="page">Termos de Uso e Política de Privacidade</a></p>
+                    <p data-cookies hidden><button type="button" class="link-button">Preferências de cookies</button></p>
                 </div>
                 <address class="footer-address">
                     Av. Paulista, 1106, 16º andar, Bela Vista, São Paulo - SP<br>

@@ -19,7 +19,12 @@
             'Enviando...': 'Sending...',
             'Pedido recebido. Vamos confirmar o horário por e-mail ou telefone.': 'Request received. We will confirm the time by e-mail or phone.',
             'Mensagem enviada. Respondemos em até um dia útil.': 'Message sent. We reply within one business day.',
-            'Não foi possível enviar agora. Tente novamente em alguns minutos.': 'Your message could not be sent right now. Please try again in a few minutes.'
+            'Não foi possível enviar agora. Tente novamente em alguns minutos.': 'Your message could not be sent right now. Please try again in a few minutes.',
+            'Aviso de cookies': 'Cookie notice',
+            'Usamos cookies necessários para o site funcionar e, com a sua permissão, ferramentas de medição de audiência para entender como o site é usado. Você pode mudar a escolha a qualquer momento em "Preferências de cookies", no rodapé.': 'We use cookies that are necessary for the website to work and, with your permission, audience measurement tools to understand how the website is used. You can change your choice at any time under "Cookie preferences" in the footer.',
+            'Saiba mais': 'Learn more',
+            'Recusar': 'Decline',
+            'Aceitar': 'Accept'
         },
         es: {
             'Solicitar agendamento': 'Solicitar una reunión',
@@ -29,7 +34,12 @@
             'Enviando...': 'Enviando...',
             'Pedido recebido. Vamos confirmar o horário por e-mail ou telefone.': 'Solicitud recibida. Confirmaremos el horario por correo electrónico o teléfono.',
             'Mensagem enviada. Respondemos em até um dia útil.': 'Mensaje enviado. Respondemos en un plazo de un día hábil.',
-            'Não foi possível enviar agora. Tente novamente em alguns minutos.': 'No fue posible enviar ahora. Inténtelo de nuevo en unos minutos.'
+            'Não foi possível enviar agora. Tente novamente em alguns minutos.': 'No fue posible enviar ahora. Inténtelo de nuevo en unos minutos.',
+            'Aviso de cookies': 'Aviso de cookies',
+            'Usamos cookies necessários para o site funcionar e, com a sua permissão, ferramentas de medição de audiência para entender como o site é usado. Você pode mudar a escolha a qualquer momento em "Preferências de cookies", no rodapé.': 'Usamos cookies necesarias para que el sitio funcione y, con su permiso, herramientas de medición de audiencia para entender cómo se usa el sitio. Puede cambiar su elección en cualquier momento en "Preferencias de cookies", en el pie de página.',
+            'Saiba mais': 'Más información',
+            'Recusar': 'Rechazar',
+            'Aceitar': 'Aceptar'
         }
     };
     if (!textos[idioma]) idioma = 'pt';
@@ -52,49 +62,139 @@
     var googleId = medicaoPermitida ? String(cfg.analyticsId || '').trim() : '';
     var usaGa4 = /^G-[A-Z0-9]+$/.test(googleId);
     var usaGtm = /^GTM-[A-Z0-9]+$/.test(googleId);
+    var posthogKey = medicaoPermitida ? String(cfg.posthogKey || '').trim() : '';
+    var usaPosthog = /^phc_[A-Za-z0-9]+$/.test(posthogKey);
+    var temMedicao = usaGa4 || usaGtm || usaPosthog;
+    var medicaoAtiva = false;
 
-    function carregar(src) {
+    function carregar(src, anonimo) {
         var s = doc.createElement('script');
         s.async = true;
+        if (anonimo) s.crossOrigin = 'anonymous';
         s.src = src;
         doc.head.appendChild(s);
     }
 
-    window.dataLayer = window.dataLayer || [];
-    if (usaGa4) {
-        carregar('https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(googleId));
-        window.gtag = function () { window.dataLayer.push(arguments); };
-        window.gtag('js', new Date());
-        window.gtag('config', googleId);
-    } else if (usaGtm) {
-        window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
-        carregar('https://www.googletagmanager.com/gtm.js?id=' + encodeURIComponent(googleId));
-    }
+    // Carrega as ferramentas de medição. Só é chamada depois do consentimento do visitante.
+    function iniciarMedicao() {
+        if (medicaoAtiva) return;
+        medicaoAtiva = true;
+        window.dataLayer = window.dataLayer || [];
+        if (usaGa4) {
+            carregar('https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(googleId));
+            window.gtag = function () { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', googleId);
+        } else if (usaGtm) {
+            window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
+            carregar('https://www.googletagmanager.com/gtm.js?id=' + encodeURIComponent(googleId));
+        }
 
-    // PostHog: fila de chamadas até a biblioteca carregar, como no trecho oficial de instalação
-    var posthogKey = medicaoPermitida ? String(cfg.posthogKey || '').trim() : '';
-    if (/^phc_[A-Za-z0-9]+$/.test(posthogKey)) {
-        var regiao = cfg.posthogRegiao === 'eu' ? 'eu' : 'us';
-        var ph = window.posthog = window.posthog || [];
-        ph._i = ph._i || [];
-        ['capture', 'identify', 'register', 'reset', 'opt_in_capturing', 'opt_out_capturing', 'set_config'].forEach(function (m) {
-            ph[m] = ph[m] || function () { ph.push([m].concat(Array.prototype.slice.call(arguments))); };
-        });
-        ph.init = function (k, o, n) { ph._i.push([k, o, n]); };
-        ph.__SV = 1;
-        ph.init(posthogKey, { api_host: 'https://' + regiao + '.i.posthog.com', person_profiles: 'identified_only' });
-        var phScript = doc.createElement('script');
-        phScript.async = true;
-        phScript.crossOrigin = 'anonymous';
-        phScript.src = 'https://' + regiao + '-assets.i.posthog.com/static/array.js';
-        doc.head.appendChild(phScript);
+        // PostHog: fila de chamadas até a biblioteca carregar, como no trecho oficial de instalação
+        if (usaPosthog) {
+            var regiao = cfg.posthogRegiao === 'eu' ? 'eu' : 'us';
+            var ph = window.posthog = window.posthog || [];
+            ph._i = ph._i || [];
+            ['capture', 'identify', 'register', 'reset', 'opt_in_capturing', 'opt_out_capturing', 'set_config'].forEach(function (m) {
+                ph[m] = ph[m] || function () { ph.push([m].concat(Array.prototype.slice.call(arguments))); };
+            });
+            ph.init = function (k, o, n) { ph._i.push([k, o, n]); };
+            ph.__SV = 1;
+            ph.init(posthogKey, { api_host: 'https://' + regiao + '.i.posthog.com', person_profiles: 'identified_only' });
+            carregar('https://' + regiao + '-assets.i.posthog.com/static/array.js', true);
+        }
     }
 
     function track(name, params) {
+        if (!medicaoAtiva) return;
         params = params || {};
         if (usaGa4 && typeof window.gtag === 'function') window.gtag('event', name, params);
         if (usaGtm) window.dataLayer.push(Object.assign({ event: name }, params));
         if (window.posthog && typeof window.posthog.capture === 'function') window.posthog.capture(name, params);
+    }
+
+    // --- consentimento de cookies ---
+    // A escolha fica no armazenamento local do navegador. Sem escolha (ou se o navegador não deixar
+    // guardar), o aviso aparece e nada de medição é carregado.
+    var CHAVE_COOKIES = 'pignoro_cookies';
+
+    function lerEscolha() {
+        try {
+            var v = JSON.parse(localStorage.getItem(CHAVE_COOKIES) || 'null');
+            return v && v.versao === 1 ? v.escolha : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function gravarEscolha(escolha) {
+        try { localStorage.setItem(CHAVE_COOKIES, JSON.stringify({ escolha: escolha, versao: 1, data: new Date().toISOString() })); } catch (e) { /* sem armazenamento: o aviso volta na próxima visita */ }
+    }
+
+    // Ao recusar depois de ter aceitado: apaga os cookies e dados que as ferramentas deixaram.
+    function apagarDadosDeMedicao() {
+        var partes = location.hostname.split('.');
+        var dominios = [''];
+        for (var i = 0; i < partes.length - 1; i++) dominios.push('; domain=.' + partes.slice(i).join('.'));
+        doc.cookie.split(';').forEach(function (c) {
+            var nome = c.split('=')[0].trim();
+            if (!/^(_ga|_gid|_gat|_gcl|ph_|__ph)/.test(nome)) return;
+            dominios.forEach(function (d) { doc.cookie = nome + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/' + d; });
+        });
+        [window.localStorage, window.sessionStorage].forEach(function (store) {
+            try {
+                Object.keys(store).forEach(function (k) { if (/^(ph_|__ph|_ga)/.test(k)) store.removeItem(k); });
+            } catch (e) { /* armazenamento indisponível */ }
+        });
+    }
+
+    var aviso = null;
+
+    function mostrarAviso() {
+        if (aviso) { aviso.hidden = false; $('button', aviso).focus(); return; }
+        var termos = $('.footer-legal a[href$="termos/"]');
+        aviso = doc.createElement('section');
+        aviso.className = 'cookie-banner';
+        aviso.setAttribute('role', 'region');
+        aviso.setAttribute('aria-label', t('Aviso de cookies'));
+
+        var texto = doc.createElement('p');
+        texto.textContent = t('Usamos cookies necessários para o site funcionar e, com a sua permissão, ferramentas de medição de audiência para entender como o site é usado. Você pode mudar a escolha a qualquer momento em "Preferências de cookies", no rodapé.') + ' ';
+        var saiba = doc.createElement('a');
+        saiba.href = (termos ? termos.getAttribute('href') : 'termos/') + '#cookies';
+        saiba.textContent = t('Saiba mais');
+        texto.appendChild(saiba);
+        aviso.appendChild(texto);
+
+        var botoes = doc.createElement('div');
+        botoes.className = 'cookie-actions';
+        [['recusado', t('Recusar')], ['aceito', t('Aceitar')]].forEach(function (op) {
+            var b = doc.createElement('button');
+            b.type = 'button';
+            b.className = 'btn btn-small cookie-btn';
+            b.textContent = op[1];
+            b.addEventListener('click', function () {
+                var antes = lerEscolha();
+                gravarEscolha(op[0]);
+                aviso.hidden = true;
+                if (op[0] === 'aceito') iniciarMedicao();
+                else if (medicaoAtiva || antes === 'aceito') { apagarDadosDeMedicao(); location.reload(); }
+            });
+            botoes.appendChild(b);
+        });
+        aviso.appendChild(botoes);
+        doc.body.appendChild(aviso);
+    }
+
+    if (temMedicao) {
+        var escolha = lerEscolha();
+        if (escolha === 'aceito') iniciarMedicao();
+        else if (escolha !== 'recusado') mostrarAviso();
+        $all('[data-cookies]').forEach(function (p) {
+            p.hidden = false;
+            var b = $('button', p);
+            if (b) b.addEventListener('click', mostrarAviso);
+        });
     }
 
     // --- ano do rodapé ---
