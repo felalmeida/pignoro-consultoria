@@ -21,4 +21,8 @@
         <xhtml:link rel="alternate" hreflang="es" href="https://pignoro.felipealmeidaconsultoria.com.br/es/"/>
         <changefreq>monthly</changefreq>
     </url>
+    <url>
+        <loc>https://pignoro.felipealmeidaconsultoria.com.br/termos/</loc>
+        <changefreq>yearly</changefreq>
+    </url>
 </urlset>

@@ -1875,3 +1875,35 @@ svg {
         grid-template-columns: 1fr;
     }
 }
+
+/* ---------- termos de uso ---------- */
+
+.legal h1 {
+    font-size: clamp(30px, 4vw, 44px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.legal h2 {
+    margin-top: 48px;
+    padding-top: 24px;
+    font-size: 26px;
+    font-weight: 600;
+    border-top: 1px solid var(--line);
+}
+
+.legal h3 {
+    margin-top: 32px;
+    font-size: 19px;
+    font-weight: 600;
+}
+
+.legal p {
+    margin-top: 14px;
+    color: var(--text-soft);
+}
+
+/* fora da página principal o cabeçalho fica sobre fundo claro: usa a cor sólida */
+.page-legal .site-header {
+    background: var(--ink-900);
+}
