@@ -40,11 +40,6 @@ function IsB64(string $v_Str): bool
     return preg_match('/^[A-Za-z0-9+\/]+={0,2}$/', $v_Str) === 1 && strlen($v_Str) % 4 === 0;
 }
 
-function HashAlgo(): string
-{
-    return defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_BCRYPT;
-}
-
 $Acao = is_string($_GET['acao'] ?? null) ? $_GET['acao'] : '';
 $Method = (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET');
 $Leitura = ['minha_chave', 'destinatarios', 'arquivos', 'baixar'];
@@ -61,30 +56,28 @@ switch ($Acao) {
     case 'sal':
         $Email = mb_strtolower(CleanLine(Post('email'), 150));
         $User = Row('SELECT kdf_sal, kdf_iter FROM usuarios WHERE email = ? AND ativo = 1 AND senha_hash IS NOT NULL', [$Email]);
-        if ($User !== null)
-            Json(200, ['sal' => $User['kdf_sal'], 'iter' => (int) $User['kdf_iter']]);
-        Json(200, ['sal' => base64_encode(substr(hash_hmac('sha256', $Email, ServerSecret(), true), 0, 16)), 'iter' => KDF_ITER]);
+        // o sal falso é sempre calculado, exista a conta ou não, para a resposta levar o mesmo tempo
+        $Fake = base64_encode(substr(hash_hmac('sha256', $Email, ServerSecret(), true), 0, 16));
+        Json(200, ['sal' => $User['kdf_sal'] ?? $Fake, 'iter' => (int) ($User['kdf_iter'] ?? KDF_ITER)]);
 
     case 'entrar':
         $Email = mb_strtolower(CleanLine(Post('email'), 150));
         $Auth = PostB64('auth', 44);
         $KeyEmail = 'entrar|email|' . hash('sha256', $Email);
         $KeyIp = 'entrar|ip|' . ClientIp();
-        if (!AttemptsOk($KeyEmail, 8, 900) || !AttemptsOk($KeyIp, 40, 900))
+        // a tentativa é contada antes de conferir a senha; a ordem fixa evita gastar o limite do IP à toa
+        if (!TakeAttempt($KeyIp, 40, 900) || !TakeAttempt($KeyEmail, 8, 900))
             Json(429, ['ok' => false, 'erro' => 'Muitas tentativas. Aguarde alguns minutos e tente de novo.']);
 
         $User = Row('SELECT * FROM usuarios WHERE email = ? AND ativo = 1 AND senha_hash IS NOT NULL', [$Email]);
-        // sem usuário, compara com um hash qualquer para a resposta levar o mesmo tempo
-        $Hash = $User['senha_hash'] ?? password_hash(ServerSecret(), HashAlgo());
-        if (!password_verify($Auth, $Hash) || $User === null) {
-            RecordAttempt($KeyEmail);
-            RecordAttempt($KeyIp);
+        // sem usuário, confere contra um hash fixo: o mesmo trabalho de uma conta real
+        if (!password_verify($Auth, $User['senha_hash'] ?? DummyHash()) || $User === null)
             Json(401, ['ok' => false, 'erro' => 'E-mail ou senha incorretos.']);
-        }
+        ClearAttempts($KeyEmail);
 
         StartSession();
         session_regenerate_id(true);
-        $_SESSION = ['uid' => (int) $User['id'], 'visto' => time()];
+        $_SESSION = ['uid' => (int) $User['id'], 'marca' => SessionMark($User), 'visto' => time()];
         Query('UPDATE usuarios SET ultimo_acesso = ? WHERE id = ?', [time(), $User['id']]);
         Json(200, [
             'ok' => true,
@@ -116,8 +109,9 @@ switch ($Acao) {
         Query('DELETE FROM arquivo_chaves WHERE usuario_id = ?', [$User['id']]);
         Db()->commit();
 
+        // as sessões abertas com a senha anterior deixam de valer (ver SessionMark)
         StartSession();
-        unset($_SESSION['uid']);
+        unset($_SESSION['uid'], $_SESSION['marca']);
         Flash('ok', 'Senha criada. Entre com o seu e-mail e a nova senha.');
         Json(200, ['ok' => true]);
 
@@ -130,15 +124,18 @@ switch ($Acao) {
     case 'trocar_senha':
         $User = CurrentUser() ?? Json(401, ['ok' => false, 'erro' => 'Sessão encerrada. Entre novamente.']);
         $Key = 'senha|' . $User['id'];
-        if (!AttemptsOk($Key, 8, 900))
+        if (!TakeAttempt($Key, 8, 900))
             Json(429, ['ok' => false, 'erro' => 'Muitas tentativas. Aguarde alguns minutos e tente de novo.']);
-        if (!password_verify(PostB64('auth_atual', 44), (string) $User['senha_hash'])) {
-            RecordAttempt($Key);
+        if (!password_verify(PostB64('auth_atual', 44), (string) $User['senha_hash']))
             Json(401, ['ok' => false, 'erro' => 'A senha atual não confere.']);
-        }
+        ClearAttempts($Key);
+
+        $Hash = password_hash(PostB64('auth', 44), HashAlgo());
         Query('UPDATE usuarios SET senha_hash = ?, kdf_sal = ?, kdf_iter = ?, chave_privada = ?, chave_privada_iv = ? WHERE id = ?',
-            [password_hash(PostB64('auth', 44), HashAlgo()), PostB64('sal', 44), KDF_ITER, PostB64('priv', 6000), PostB64('iv', 24), $User['id']]);
+            [$Hash, PostB64('sal', 44), KDF_ITER, PostB64('priv', 6000), PostB64('iv', 24), $User['id']]);
+        // esta sessão continua; as outras do mesmo usuário caem, porque a marca delas é da senha antiga
         session_regenerate_id(true);
+        $_SESSION['marca'] = SessionMark(['senha_hash' => $Hash]);
         Json(200, ['ok' => true]);
 
     // Chaves públicas de quem deve conseguir abrir um arquivo do cliente: ele e os administradores.

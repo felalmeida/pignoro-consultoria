@@ -296,18 +296,50 @@ function IsHttps(): bool
     return FromCloudflare() && str_contains((string) ($_SERVER['HTTP_CF_VISITOR'] ?? ''), '"https"');
 }
 
-/** Devolve false se a chave já atingiu o limite de tentativas dentro da janela. */
-function AttemptsOk(string $v_Key, int $v_Max, int $v_Window): bool
+/**
+ * Registra uma tentativa na chave e devolve false se o limite da janela já foi atingido.
+ * Contagem e registro acontecem na mesma transação exclusiva e antes de a senha ser conferida,
+ * para que requisições simultâneas não passem todas pelo limite.
+ */
+function TakeAttempt(string $v_Key, int $v_Max, int $v_Window): bool
 {
-    $Since = time() - $v_Window;
-    return (int) Query('SELECT COUNT(*) FROM tentativas WHERE chave = ? AND quando > ?', [$v_Key, $Since])->fetchColumn() < $v_Max;
-}
-
-function RecordAttempt(string $v_Key): void
-{
-    Query('INSERT INTO tentativas (chave, quando) VALUES (?, ?)', [$v_Key, time()]);
+    $Pdo = Db();
+    $Pdo->exec('BEGIN IMMEDIATE');
+    $Count = (int) Query('SELECT COUNT(*) FROM tentativas WHERE chave = ? AND quando > ?', [$v_Key, time() - $v_Window])->fetchColumn();
+    $Allowed = $Count < $v_Max;
+    if ($Allowed)
+        Query('INSERT INTO tentativas (chave, quando) VALUES (?, ?)', [$v_Key, time()]);
     if (random_int(1, 50) === 1)
         Query('DELETE FROM tentativas WHERE quando < ?', [time() - 86400]);
+    $Pdo->exec('COMMIT');
+    return $Allowed;
+}
+
+/** Zera as tentativas da chave depois de um acerto. */
+function ClearAttempts(string $v_Key): void
+{
+    Query('DELETE FROM tentativas WHERE chave = ?', [$v_Key]);
+}
+
+/**
+ * Hash de uma senha que ninguém tem, conferido quando o e-mail não existe, para que a resposta
+ * leve o mesmo tempo que a de uma conta real. Calculado uma vez e guardado na pasta de dados.
+ */
+function DummyHash(): string
+{
+    $File = DataDir() . '/portal.hash';
+    $Hash = is_file($File) ? trim((string) file_get_contents($File)) : '';
+    if ($Hash === '' || password_get_info($Hash)['algo'] === null) {
+        $Hash = password_hash(bin2hex(random_bytes(32)), HashAlgo());
+        file_put_contents($File, $Hash, LOCK_EX);
+        @chmod($File, 0600);
+    }
+    return $Hash;
+}
+
+function HashAlgo(): string
+{
+    return defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_BCRYPT;
 }
 
 // ---------- sessão ----------
@@ -373,9 +405,18 @@ function CurrentUser(): ?array
     StartSession();
     $Id = (int) ($_SESSION['uid'] ?? 0);
     $User = $Id > 0 ? Row('SELECT * FROM usuarios WHERE id = ? AND ativo = 1 AND senha_hash IS NOT NULL', [$Id]) : null;
+    // sessão aberta com uma senha que já foi trocada ou redefinida deixa de valer
+    if ($User !== null && !hash_equals(SessionMark($User), (string) ($_SESSION['marca'] ?? '')))
+        $User = null;
     if ($User === null && $Id > 0)
-        unset($_SESSION['uid']);
+        unset($_SESSION['uid'], $_SESSION['marca']);
     return $User;
+}
+
+/** Marca que liga a sessão à senha vigente: muda sempre que a senha muda. */
+function SessionMark(array $v_User): string
+{
+    return hash_hmac('sha256', (string) $v_User['senha_hash'], ServerSecret());
 }
 
 /** Caminho da raiz do site a partir da página atual (cliente/ ou cliente/admin/). */
