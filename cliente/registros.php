@@ -18,18 +18,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $Id = (int) ($_POST['id'] ?? 0);
     $Row = $Id > 0 ? $Find($Id) : null;
     if ($Id > 0 && ($Row === null || !RegistroEditavel($Def, $Row))) {
-        Flash('erro', 'Este registro não pode mais ser alterado. Envie uma mensagem à Pignoro se precisar corrigi-lo.');
+        Flash('erro', T('Este registro não pode mais ser alterado. Envie uma mensagem à Pignoro se precisar corrigi-lo.'));
         Redirect($Self);
     }
     if (($_POST['acao'] ?? '') === 'excluir') {
         Query("DELETE FROM {$Def['tabela']} WHERE id = ? AND usuario_id = ?", [$Id, $User['id']]);
-        Flash('ok', 'Registro excluído.');
+        Flash('ok', T('Registro excluído.'));
         Redirect($Self);
     }
     [$Values, $Error] = RegistroLer($Def, $_POST);
     if ($Error === '') {
         RegistroSalvar($Def, (int) $User['id'], $Values, $Id);
-        Flash('ok', 'Registro salvo.');
+        Flash('ok', T('Registro salvo.'));
         Redirect($Self);
     }
     // com erro, a página é mostrada de novo com o que foi digitado
@@ -50,16 +50,16 @@ echo '<h1>' . E($Def['titulo']) . '</h1><p class="page-intro">' . E($Def['intro'
 RegistroTabela($Def, $Rows, function (array $v_Row) use ($Def, $Self): string {
     if (!RegistroEditavel($Def, $v_Row))
         return '';
-    return '<a class="pbtn" href="' . E($Self . '&editar=' . $v_Row['id']) . '#formulario">Alterar</a>'
-        . '<form method="post" action="' . E($Self) . '" data-confirmar="Excluir este registro?">' . CsrfField()
+    return '<a class="pbtn" href="' . E($Self . '&editar=' . $v_Row['id']) . '#formulario">' . E(T('Alterar')) . '</a>'
+        . '<form method="post" action="' . E($Self) . '" data-confirmar="' . E(T('Excluir este registro?')) . '">' . CsrfField()
         . '<input type="hidden" name="id" value="' . (int) $v_Row['id'] . '"><input type="hidden" name="acao" value="excluir">'
-        . '<button class="pbtn pbtn-danger" type="submit">Excluir</button></form>';
+        . '<button class="pbtn pbtn-danger" type="submit">' . E(T('Excluir')) . '</button></form>';
 });
 
-echo '<h2 id="formulario">' . E($EditId > 0 ? 'Alterar registro' : $Def['novo']) . '</h2>'
+echo '<h2 id="formulario">' . E($EditId > 0 ? T('Alterar registro') : $Def['novo']) . '</h2>'
     . '<form class="pform card-box" method="post" action="' . E($Self) . '">' . CsrfField()
     . '<input type="hidden" name="id" value="' . $EditId . '">';
 RegistroCampos($Def, $Values);
-echo '<div class="pform-foot"><button class="btn btn-primary" type="submit">Salvar</button>'
-    . ($EditId > 0 ? '<a class="pbtn" href="' . E($Self) . '">Cancelar</a>' : '') . '</div></form>';
+echo '<div class="pform-foot"><button class="btn btn-primary" type="submit">' . E(T('Salvar')) . '</button>'
+    . ($EditId > 0 ? '<a class="pbtn" href="' . E($Self) . '">' . E(T('Cancelar')) . '</a>' : '') . '</div></form>';
 PageFoot();

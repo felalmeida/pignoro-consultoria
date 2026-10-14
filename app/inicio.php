@@ -9,6 +9,7 @@ mb_internal_encoding('UTF-8');
 date_default_timezone_set('America/Sao_Paulo');
 
 $Config = require __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/idioma.php';
 
 // Iterações do PBKDF2 feito no navegador para derivar a senha.
 const KDF_ITER = 600000;
@@ -45,7 +46,7 @@ function Abort(int $v_Status, string $v_Message, string $v_Reason = ''): void
         echo json_encode(['ok' => false, 'erro' => $v_Message], JSON_UNESCAPED_UNICODE);
     } else {
         header('Content-Type: text/html; charset=utf-8');
-        echo '<!DOCTYPE html><html lang="pt-BR"><meta charset="utf-8"><title>Área do cliente</title><p>' . E($v_Message) . '</p></html>';
+        echo '<!DOCTYPE html><html lang="' . IDIOMA_HTML[Lang()] . '"><meta charset="utf-8"><title>' . E(T('Área do cliente')) . '</title><p>' . E($v_Message) . '</p></html>';
     }
     exit;
 }
@@ -77,7 +78,7 @@ function DataDir(): string
     elseif (!is_writable($Dir))
         $Problem = 'está sem permissão de escrita';
     if ($Problem !== '')
-        Abort(503, 'Área do cliente indisponível no momento.', 'pasta de dados ' . $Problem . ': ' . $Dir);
+        Abort(503, T('Área do cliente indisponível no momento.'), 'pasta de dados ' . $Problem . ': ' . $Dir);
 
     return $Checked = $Dir;
 }
@@ -111,7 +112,7 @@ function FilesRoot(): string
     elseif (!is_writable($Dir))
         $Problem = 'está sem permissão de escrita';
     if ($Problem !== '')
-        Abort(503, 'Área de arquivos indisponível no momento.', 'pasta de arquivos ' . $Problem . ': ' . $Dir);
+        Abort(503, T('Área de arquivos indisponível no momento.'), 'pasta de arquivos ' . $Problem . ': ' . $Dir);
 
     return $Checked = $Dir;
 }
@@ -133,7 +134,7 @@ function ClientFilesDir(int $v_ClientId): string
     elseif ((fileperms($Dir) & 0077) !== 0 && !@chmod($Dir, 0700))
         $Problem = 'está acessível a outros usuários';
     if ($Problem !== '')
-        Abort(503, 'Área de arquivos indisponível no momento.', 'pasta do cliente ' . $Problem . ': ' . $Dir);
+        Abort(503, T('Área de arquivos indisponível no momento.'), 'pasta do cliente ' . $Problem . ': ' . $Dir);
     return $Dir;
 }
 
@@ -165,7 +166,7 @@ function ServerSecret(): string
     if (strlen($Secret) !== 64) {
         $Secret = bin2hex(random_bytes(32));
         if (file_put_contents($File, $Secret, LOCK_EX) === false)
-            Abort(503, 'Área do cliente indisponível no momento.', 'segredo não pôde ser gravado');
+            Abort(503, T('Área do cliente indisponível no momento.'), 'segredo não pôde ser gravado');
         @chmod($File, 0600);
     }
     return $Secret;
@@ -177,7 +178,7 @@ function Db(): PDO
     if ($Pdo !== null)
         return $Pdo;
     if (!in_array('sqlite', PDO::getAvailableDrivers(), true))
-        Abort(503, 'Área do cliente indisponível no momento.', 'extensão pdo_sqlite do PHP não está instalada');
+        Abort(503, T('Área do cliente indisponível no momento.'), 'extensão pdo_sqlite do PHP não está instalada');
 
     $File = DataDir() . '/portal.sqlite';
     $New = !is_file($File);
@@ -198,8 +199,15 @@ function Db(): PDO
 function Migrate(PDO $v_Pdo): void
 {
     $Version = (int) $v_Pdo->query('PRAGMA user_version')->fetchColumn();
-    if ($Version >= 1)
+    if ($Version >= 2)
         return;
+    if ($Version === 1) {
+        $v_Pdo->exec('BEGIN IMMEDIATE');
+        $v_Pdo->exec("ALTER TABLE usuarios ADD COLUMN idioma TEXT NOT NULL DEFAULT 'pt'");
+        $v_Pdo->exec('PRAGMA user_version = 2');
+        $v_Pdo->exec('COMMIT');
+        return;
+    }
 
     $v_Pdo->exec('BEGIN IMMEDIATE');
     $v_Pdo->exec(<<<'SQL'
@@ -218,7 +226,8 @@ function Migrate(PDO $v_Pdo): void
             ativacao_hash TEXT,
             ativacao_expira INTEGER,
             criado_em INTEGER NOT NULL,
-            ultimo_acesso INTEGER
+            ultimo_acesso INTEGER,
+            idioma TEXT NOT NULL DEFAULT 'pt'
         );
         CREATE TABLE IF NOT EXISTS empresas (
             usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
@@ -298,7 +307,7 @@ function Migrate(PDO $v_Pdo): void
             quando INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS tentativas_chave ON tentativas (chave, quando);
-        PRAGMA user_version = 1;
+        PRAGMA user_version = 2;
         SQL);
     $v_Pdo->exec('COMMIT');
 }
@@ -455,7 +464,7 @@ function StartSession(): void
     if (isset($_SESSION['uid']) && $Last > 0 && time() - $Last > SESSAO_OCIOSA) {
         $_SESSION = [];
         session_regenerate_id(true);
-        $_SESSION['aviso'] = ['erro', 'Sua sessão expirou. Entre novamente.'];
+        $_SESSION['aviso'] = ['erro', T('Sua sessão expirou. Entre novamente.')];
     }
     $_SESSION['visto'] = time();
 }
@@ -473,7 +482,7 @@ function CheckCsrf(): void
 {
     $Sent = (string) ($_POST['csrf'] ?? $_SERVER['HTTP_X_CSRF'] ?? '');
     if ($Sent === '' || !hash_equals(CsrfToken(), $Sent))
-        Abort(403, 'Formulário expirado. Recarregue a página e tente de novo.');
+        Abort(403, T('Formulário expirado. Recarregue a página e tente de novo.'));
 }
 
 function CsrfField(): string
@@ -510,6 +519,36 @@ function SessionMark(array $v_User): string
     return hash_hmac('sha256', (string) $v_User['senha_hash'], ServerSecret());
 }
 
+/**
+ * Define o idioma da requisição. Ordem: ?idioma= (troca pelo seletor, que fica gravada no cookie
+ * e na conta), cookie, idioma da conta e, por fim, o idioma preferido do navegador.
+ */
+function ResolveLang(): void
+{
+    $Chosen = ValidLang($_GET['idioma'] ?? null);
+    if ($Chosen !== null) {
+        setcookie('pignoro_idioma', $Chosen, ['expires' => time() + 365 * 86400, 'path' => '/',
+            'secure' => IsHttps(), 'httponly' => true, 'samesite' => 'Lax']);
+        $_COOKIE['pignoro_idioma'] = $Chosen;
+    }
+    $Lang = $Chosen ?? ValidLang($_COOKIE['pignoro_idioma'] ?? null);
+    if ($Lang === null && isset($_COOKIE['pignoro_sessao'])) {
+        $User = CurrentUser();
+        $Lang = ValidLang($User['idioma'] ?? null);
+    }
+    Lang($Lang ?? BrowserLang());
+    if ($Chosen !== null && isset($_COOKIE['pignoro_sessao']) && ($User = CurrentUser()) !== null && $User['idioma'] !== $Chosen)
+        Query('UPDATE usuarios SET idioma = ? WHERE id = ?', [$Chosen, $User['id']]);
+}
+
+/** Endereço da página atual com o idioma trocado, para o seletor. */
+function LangUrl(string $v_Lang): string
+{
+    $Query = $_GET;
+    $Query['idioma'] = $v_Lang;
+    return basename((string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH)) . '?' . http_build_query($Query);
+}
+
 /** Caminho da raiz do site a partir da página atual (cliente/ ou cliente/admin/). */
 function Root(): string
 {
@@ -529,12 +568,12 @@ function RequireRole(string $v_Role): array
     $Json = str_contains((string) ($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json');
     if ($User === null) {
         if ($Json)
-            Abort(401, 'Sessão encerrada. Entre novamente.');
+            Abort(401, T('Sessão encerrada. Entre novamente.'));
         Redirect('index.php');
     }
     if ($User['papel'] !== $v_Role) {
         if ($Json)
-            Abort(403, 'Acesso não permitido.');
+            Abort(403, T('Acesso não permitido.'));
         Redirect($User['papel'] === 'admin' ? 'admin/index.php' : 'painel.php');
     }
     return $User;
@@ -545,7 +584,7 @@ function ClientOr404(int $v_Id): array
 {
     $Client = Row("SELECT * FROM usuarios WHERE id = ? AND papel = 'cliente'", [$v_Id]);
     if ($Client === null)
-        Abort(404, 'Cliente não encontrado.');
+        Abort(404, T('Cliente não encontrado.'));
     return $Client;
 }
 
@@ -590,28 +629,37 @@ function Fingerprint(?string $v_PublicKey): string
 
 // ---------- formatação ----------
 
-function FormatDateTime(?int $v_Time): string
+// Datas e valores: dia/mês/ano e vírgula decimal em português e espanhol; mês/dia/ano e ponto em inglês.
+
+function FormatDateTime(?int $v_Time, ?string $v_Lang = null): string
 {
-    return $v_Time ? date('d/m/Y H:i', $v_Time) : '';
+    return $v_Time ? date(($v_Lang ?? Lang()) === 'en' ? 'm/d/Y H:i' : 'd/m/Y H:i', $v_Time) : '';
 }
 
-function FormatDate(string $v_Iso): string
+function FormatDate(string $v_Iso, ?string $v_Lang = null): string
 {
-    return preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $v_Iso, $M) ? "$M[3]/$M[2]/$M[1]" : '';
+    if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $v_Iso, $M))
+        return '';
+    return ($v_Lang ?? Lang()) === 'en' ? "$M[2]/$M[3]/$M[1]" : "$M[3]/$M[2]/$M[1]";
 }
 
 function FormatMoney(int $v_Cents): string
 {
-    return number_format($v_Cents / 100, 2, ',', '.');
+    return Lang() === 'en' ? number_format($v_Cents / 100, 2, '.', ',') : number_format($v_Cents / 100, 2, ',', '.');
 }
 
-/** Converte "1.234,56" ou "1234.56" em centavos. Devolve null se não for um valor válido. */
+/**
+ * Converte um valor digitado em centavos: "1.234,56" em português e espanhol, "1,234.56" em inglês.
+ * Devolve null se não for um valor válido.
+ */
 function ParseMoney(string $v_Str): ?int
 {
-    $Str = preg_replace('/[\s\x{00A0}]|R\$/u', '', $v_Str);
+    $Str = preg_replace('/[\s\x{00A0}]|R\$|US\$|\$/u', '', $v_Str);
     if ($Str === '')
         return 0;
-    if (str_contains($Str, ','))
+    if (Lang() === 'en')
+        $Str = str_replace(',', '', $Str);
+    elseif (str_contains($Str, ','))
         $Str = str_replace(',', '.', str_replace('.', '', $Str));
     if (!preg_match('/^\d{1,13}(\.\d{1,2})?$/', $Str))
         return null;
@@ -645,33 +693,40 @@ function PageHead(string $v_Title, string $v_Active = ''): void
     if ($User !== null && $User['papel'] === 'cliente')
         // Mensagens, contatos, créditos e operações seguem funcionando (pelo Início e por endereço),
         // só estão fora do menu por enquanto.
-        $Nav = ['painel.php' => 'Início', 'arquivos.php' => 'Arquivos', 'cadastro.php' => 'Cadastro',
-            'conta.php' => 'Minha conta', 'ajuda.php' => 'Ajuda'];
+        $Nav = ['painel.php' => T('Início'), 'arquivos.php' => T('Arquivos'), 'cadastro.php' => T('Cadastro'),
+            'conta.php' => T('Minha conta'), 'ajuda.php' => T('Ajuda')];
     elseif ($User !== null)
-        $Nav = ['admin/index.php' => 'Clientes', 'conta.php' => 'Minha conta', 'ajuda.php' => 'Ajuda'];
+        $Nav = ['admin/index.php' => T('Clientes'), 'conta.php' => T('Minha conta'), 'ajuda.php' => T('Ajuda')];
+    $Lang = Lang();
 
     header('Content-Type: text/html; charset=utf-8');
-    echo '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">'
+    echo '<!DOCTYPE html><html lang="' . IDIOMA_HTML[$Lang] . '"><head><meta charset="utf-8">'
         . '<meta name="viewport" content="width=device-width, initial-scale=1">'
         . '<meta name="robots" content="noindex, nofollow">'
         . '<meta name="csrf" content="' . E(CsrfToken()) . '">'
         . '<title>' . E($v_Title) . ' | Pignoro</title>'
         . '<link rel="icon" href="' . $Root . 'assets/img/logo.svg" type="image/svg+xml">'
-        . '<link rel="stylesheet" href="' . $Root . 'assets/css/site.css?v=1">'
-        . '<link rel="stylesheet" href="' . $Root . 'assets/css/portal.css?v=2">'
-        . '<script defer src="' . $Root . 'assets/js/portal.js?v=3"></script>'
-        . '</head><body class="portal" data-api="' . $Root . 'cliente/api.php">';
+        . '<link rel="stylesheet" href="' . $Root . 'assets/css/site.css?v=2">'
+        . '<link rel="stylesheet" href="' . $Root . 'assets/css/portal.css?v=3">'
+        . '<script defer src="' . $Root . 'assets/js/portal.js?v=4"></script>'
+        . '</head><body class="portal" data-api="' . $Root . 'cliente/api.php"'
+        . ($Lang !== 'pt' ? ' data-textos="' . E((string) json_encode(Dictionary($Lang, 'js'), JSON_UNESCAPED_UNICODE)) . '"' : '') . '>';
 
     echo '<header class="portal-header"><div class="container portal-header-inner">'
         . '<a class="brand" href="' . $Root . '"><img src="' . $Root . 'assets/img/logo-dark.svg" alt="" width="32" height="32">'
-        . '<span class="brand-text"><strong>Pignoro</strong><span>Área do cliente</span></span></a>';
+        . '<span class="brand-text"><strong>Pignoro</strong><span>' . E(T('Área do cliente')) . '</span></span></a>'
+        . '<div class="portal-user"><nav class="lang-switch" aria-label="' . E(T('Idioma')) . '">';
+    foreach (IDIOMAS as $Code => $Name)
+        echo '<a href="' . E(LangUrl($Code)) . '" hreflang="' . $Code . '" lang="' . $Code . '" title="' . E($Name) . '"'
+            . ($Code === $Lang ? ' aria-current="true"' : '') . '>' . strtoupper($Code) . '</a>';
+    echo '</nav>';
     if ($User !== null)
-        echo '<div class="portal-user"><span>' . E($User['nome']) . '</span>'
+        echo '<span class="portal-user-name">' . E($User['nome']) . '</span>'
             . '<form method="post" action="' . $Root . 'cliente/sair.php" data-sair>' . CsrfField()
-            . '<button class="btn btn-ghost btn-small" type="submit">Sair</button></form></div>';
-    echo '</div>';
+            . '<button class="btn btn-ghost btn-small" type="submit">' . E(T('Sair')) . '</button></form>';
+    echo '</div></div>';
     if ($Nav) {
-        echo '<nav class="portal-nav" aria-label="Área do cliente"><div class="container">';
+        echo '<nav class="portal-nav" aria-label="' . E(T('Área do cliente')) . '"><div class="container">';
         foreach ($Nav as $File => $Label)
             echo '<a href="' . $Root . 'cliente/' . E($File) . '"' . ($File === $v_Active ? ' aria-current="page"' : '') . '>' . E($Label) . '</a>';
         echo '</div></nav>';
@@ -689,3 +744,5 @@ function PageFoot(): void
 {
     echo '</div></main><footer class="portal-footer"><div class="container">© ' . date('Y') . ' Pignoro Consultoria.</div></footer></body></html>';
 }
+
+ResolveLang();

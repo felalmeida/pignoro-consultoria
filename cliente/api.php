@@ -31,7 +31,7 @@ function PostB64(string $v_Name, int $v_Max): string
 {
     $Value = Post($v_Name);
     if ($Value === '' || strlen($Value) > $v_Max || !IsB64($Value))
-        Json(400, ['ok' => false, 'erro' => 'Dados inválidos. Recarregue a página e tente de novo.']);
+        Json(400, ['ok' => false, 'erro' => T('Dados inválidos. Recarregue a página e tente de novo.')]);
     return $Value;
 }
 
@@ -45,7 +45,7 @@ $Method = (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET');
 $Leitura = ['minha_chave', 'destinatarios', 'arquivos', 'baixar'];
 
 if ($Method !== (in_array($Acao, $Leitura, true) ? 'GET' : 'POST'))
-    Json(405, ['ok' => false, 'erro' => 'Método não permitido.']);
+    Json(405, ['ok' => false, 'erro' => T('Método não permitido.')]);
 if ($Method === 'POST')
     CheckCsrf();
 
@@ -67,12 +67,12 @@ switch ($Acao) {
         $KeyIp = 'entrar|ip|' . ClientIp();
         // a tentativa é contada antes de conferir a senha; a ordem fixa evita gastar o limite do IP à toa
         if (!TakeAttempt($KeyIp, 40, 900) || !TakeAttempt($KeyEmail, 8, 900))
-            Json(429, ['ok' => false, 'erro' => 'Muitas tentativas. Aguarde alguns minutos e tente de novo.']);
+            Json(429, ['ok' => false, 'erro' => T('Muitas tentativas. Aguarde alguns minutos e tente de novo.')]);
 
         $User = Row('SELECT * FROM usuarios WHERE email = ? AND ativo = 1 AND senha_hash IS NOT NULL', [$Email]);
         // sem usuário, confere contra um hash fixo: o mesmo trabalho de uma conta real
         if (!password_verify($Auth, $User['senha_hash'] ?? DummyHash()) || $User === null)
-            Json(401, ['ok' => false, 'erro' => 'E-mail ou senha incorretos.']);
+            Json(401, ['ok' => false, 'erro' => T('E-mail ou senha incorretos.')]);
         ClearAttempts($KeyEmail);
 
         StartSession();
@@ -94,7 +94,7 @@ switch ($Acao) {
         $User = preg_match('/^[0-9a-f]{64}$/', $Token) !== 1 ? null
             : Row('SELECT id FROM usuarios WHERE ativacao_hash = ? AND ativacao_expira > ? AND ativo = 1', [hash('sha256', $Token), time()]);
         if ($User === null)
-            Json(400, ['ok' => false, 'erro' => 'Este link não é mais válido. Peça um novo à Pignoro.']);
+            Json(400, ['ok' => false, 'erro' => T('Este link não é mais válido. Peça um novo à Pignoro.')]);
 
         $Sal = PostB64('sal', 44);
         $Auth = PostB64('auth', 44);
@@ -112,22 +112,22 @@ switch ($Acao) {
         // as sessões abertas com a senha anterior deixam de valer (ver SessionMark)
         StartSession();
         unset($_SESSION['uid'], $_SESSION['marca']);
-        Flash('ok', 'Senha criada. Entre com o seu e-mail e a nova senha.');
+        Flash('ok', T('Senha criada. Entre com o seu e-mail e a nova senha.'));
         Json(200, ['ok' => true]);
 
     case 'minha_chave':
-        $User = CurrentUser() ?? Json(401, ['ok' => false, 'erro' => 'Sessão encerrada. Entre novamente.']);
+        $User = CurrentUser() ?? Json(401, ['ok' => false, 'erro' => T('Sessão encerrada. Entre novamente.')]);
         Json(200, ['uid' => (int) $User['id'], 'sal' => $User['kdf_sal'], 'iter' => (int) $User['kdf_iter'],
             'priv' => $User['chave_privada'], 'iv' => $User['chave_privada_iv']]);
 
     // Troca de senha: o navegador abriu a chave privada com a senha atual e a cifrou de novo com a nova.
     case 'trocar_senha':
-        $User = CurrentUser() ?? Json(401, ['ok' => false, 'erro' => 'Sessão encerrada. Entre novamente.']);
+        $User = CurrentUser() ?? Json(401, ['ok' => false, 'erro' => T('Sessão encerrada. Entre novamente.')]);
         $Key = 'senha|' . $User['id'];
         if (!TakeAttempt($Key, 8, 900))
-            Json(429, ['ok' => false, 'erro' => 'Muitas tentativas. Aguarde alguns minutos e tente de novo.']);
+            Json(429, ['ok' => false, 'erro' => T('Muitas tentativas. Aguarde alguns minutos e tente de novo.')]);
         if (!password_verify(PostB64('auth_atual', 44), (string) $User['senha_hash']))
-            Json(401, ['ok' => false, 'erro' => 'A senha atual não confere.']);
+            Json(401, ['ok' => false, 'erro' => T('A senha atual não confere.')]);
         ClearAttempts($Key);
 
         $Hash = password_hash(PostB64('auth', 44), HashAlgo());
@@ -158,7 +158,7 @@ switch ($Acao) {
         $Envio = bin2hex(random_bytes(16));
         $Path = ClientFilesDir((int) $Client['id']) . '/envio-' . $Envio . '.part';
         if (file_put_contents($Path, '') === false)
-            Abort(500, 'Não foi possível guardar o arquivo.', 'falha ao criar ' . $Path);
+            Abort(500, T('Não foi possível guardar o arquivo.'), 'falha ao criar ' . $Path);
         @chmod($Path, 0600);
         $_SESSION['envios'][$Envio] = (int) $Client['id'];
         Json(200, ['ok' => true, 'envio' => $Envio, 'parte' => ENVIO_PARTE]);
@@ -169,37 +169,36 @@ switch ($Acao) {
         RequireRole('admin');
         $Envio = is_string($_GET['envio'] ?? null) ? $_GET['envio'] : '';
         if (preg_match('/^[0-9a-f]{32}$/', $Envio) !== 1 || !isset($_SESSION['envios'][$Envio]))
-            Json(404, ['ok' => false, 'erro' => 'Envio não encontrado. Recarregue a página e tente de novo.']);
+            Json(404, ['ok' => false, 'erro' => T('Envio não encontrado. Recarregue a página e tente de novo.')]);
         $Path = ClientFilesDir((int) $_SESSION['envios'][$Envio]) . '/envio-' . $Envio . '.part';
         $Handle = @fopen($Path, 'ab');
         if ($Handle === false || !flock($Handle, LOCK_EX))
-            Abort(500, 'Não foi possível guardar o arquivo.', 'falha ao abrir ' . $Path);
+            Abort(500, T('Não foi possível guardar o arquivo.'), 'falha ao abrir ' . $Path);
         clearstatcache(true, $Path);
         $Received = (int) filesize($Path);
         if ((int) ($_GET['pos'] ?? -1) !== $Received)
-            Json(409, ['ok' => false, 'recebido' => $Received, 'erro' => 'Parte fora de ordem.']);
+            Json(409, ['ok' => false, 'recebido' => $Received, 'erro' => T('Parte fora de ordem.')]);
 
         $Chunk = (string) file_get_contents('php://input', false, null, 0, ENVIO_PARTE + 1);
         // O PHP guarda em arquivo temporário todo corpo de requisição acima de 16 KB. Se a pasta
         // temporária não aceita gravação, o corpo chega vazio aqui, embora o navegador o tenha enviado.
         if ($Chunk === '' && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
             $Tmp = (string) (ini_get('upload_tmp_dir') ?: sys_get_temp_dir());
-            Abort(500, 'O servidor descartou os dados enviados: o PHP não consegue gravar na pasta temporária (' . $Tmp
-                . '). Corrija a permissão ou o espaço dessa pasta no servidor.',
+            Abort(500, T('O servidor descartou os dados enviados: o PHP não consegue gravar na pasta temporária ({pasta}). Corrija a permissão ou o espaço dessa pasta no servidor.', ['pasta' => $Tmp]),
                 'corpo da requisição descartado pelo PHP; pasta temporária ' . $Tmp . (is_writable($Tmp) ? ' gravável' : ' sem permissão de escrita')
                 . ', livre: ' . (int) (@disk_free_space($Tmp) / 1048576) . ' MB');
         }
         if ($Chunk === '' || strlen($Chunk) > ENVIO_PARTE)
-            Json(400, ['ok' => false, 'recebido' => $Received, 'erro' => 'Parte vazia ou grande demais.']);
+            Json(400, ['ok' => false, 'recebido' => $Received, 'erro' => T('Parte vazia ou grande demais.')]);
         if ($Received + strlen($Chunk) > ARQUIVO_MAX + 16) {
             fclose($Handle);
             @unlink($Path);
             unset($_SESSION['envios'][$Envio]);
-            Json(413, ['ok' => false, 'erro' => 'Arquivo maior que o limite aceito.']);
+            Json(413, ['ok' => false, 'erro' => T('Arquivo maior que o limite aceito.')]);
         }
         if (fwrite($Handle, $Chunk) !== strlen($Chunk)) {
             ftruncate($Handle, $Received);
-            Abort(500, 'Não foi possível guardar o arquivo.', 'falha ao gravar em ' . $Path . ' (disco cheio?)');
+            Abort(500, T('Não foi possível guardar o arquivo.'), 'falha ao gravar em ' . $Path . ' (disco cheio?)');
         }
         fclose($Handle);
         Json(200, ['ok' => true, 'recebido' => $Received + strlen($Chunk)]);
@@ -209,30 +208,30 @@ switch ($Acao) {
         $Client = ClientOr404((int) Post('cliente'));
         $Envio = Post('envio');
         if (preg_match('/^[0-9a-f]{32}$/', $Envio) !== 1 || ($_SESSION['envios'][$Envio] ?? 0) !== (int) $Client['id'])
-            Json(404, ['ok' => false, 'erro' => 'Envio não encontrado. Recarregue a página e tente de novo.']);
+            Json(404, ['ok' => false, 'erro' => T('Envio não encontrado. Recarregue a página e tente de novo.')]);
         $Dir = ClientFilesDir((int) $Client['id']);
         $Part = $Dir . '/envio-' . $Envio . '.part';
         clearstatcache(true, $Part);
         $Size = is_file($Part) ? (int) filesize($Part) : 0;
         if ($Size !== (int) Post('tamanho') || $Size < 17 || $Size > ARQUIVO_MAX + 16)
-            Json(400, ['ok' => false, 'erro' => 'O arquivo chegou incompleto. Tente enviar de novo.']);
+            Json(400, ['ok' => false, 'erro' => T('O arquivo chegou incompleto. Tente enviar de novo.')]);
 
         $Iv = PostB64('iv', 24);
         $Meta = PostB64('meta', 2400);
         $MetaIv = PostB64('meta_iv', 24);
         $Keys = json_decode(Post('chaves'), true);
         if (!is_array($Keys) || !isset($Keys[$Admin['id']]))
-            Json(400, ['ok' => false, 'erro' => 'Dados inválidos. Recarregue a página e tente de novo.']);
+            Json(400, ['ok' => false, 'erro' => T('Dados inválidos. Recarregue a página e tente de novo.')]);
         $Allowed = Query("SELECT id FROM usuarios WHERE chave_publica IS NOT NULL AND ativo = 1 AND (papel = 'admin' OR id = ?)",
             [$Client['id']])->fetchAll(PDO::FETCH_COLUMN);
         foreach ($Keys as $UserId => $Key) {
             if (!in_array((int) $UserId, array_map('intval', $Allowed), true) || !is_string($Key) || strlen($Key) > 700 || !IsB64($Key))
-                Json(400, ['ok' => false, 'erro' => 'Dados inválidos. Recarregue a página e tente de novo.']);
+                Json(400, ['ok' => false, 'erro' => T('Dados inválidos. Recarregue a página e tente de novo.')]);
         }
 
         $Stored = bin2hex(random_bytes(16)) . '.bin';
         if (!rename($Part, $Dir . '/' . $Stored))
-            Abort(500, 'Não foi possível guardar o arquivo.', 'falha ao renomear ' . $Part);
+            Abort(500, T('Não foi possível guardar o arquivo.'), 'falha ao renomear ' . $Part);
         unset($_SESSION['envios'][$Envio]);
 
         Db()->beginTransaction();
@@ -246,7 +245,7 @@ switch ($Acao) {
 
     // Lista de arquivos de um cliente, com a chave de cada arquivo cifrada para quem está pedindo.
     case 'arquivos':
-        $User = CurrentUser() ?? Json(401, ['ok' => false, 'erro' => 'Sessão encerrada. Entre novamente.']);
+        $User = CurrentUser() ?? Json(401, ['ok' => false, 'erro' => T('Sessão encerrada. Entre novamente.')]);
         $Client = $User['papel'] === 'admin' ? ClientOr404((int) ($_GET['cliente'] ?? 0)) : $User;
         $Files = Query('SELECT a.id, a.tamanho, a.iv, a.meta, a.meta_iv, a.criado_em, minha.chave,
                 cli.chave IS NOT NULL AS cliente_tem_chave
@@ -262,13 +261,13 @@ switch ($Acao) {
         Json(200, ['arquivos' => $Files, 'cliente_pub' => $User['papel'] === 'admin' ? $Client['chave_publica'] : null]);
 
     case 'baixar':
-        $User = CurrentUser() ?? Json(401, ['ok' => false, 'erro' => 'Sessão encerrada. Entre novamente.']);
+        $User = CurrentUser() ?? Json(401, ['ok' => false, 'erro' => T('Sessão encerrada. Entre novamente.')]);
         $File = Row('SELECT * FROM arquivos WHERE id = ?', [(int) ($_GET['id'] ?? 0)]);
         if ($File === null || ($User['papel'] !== 'admin' && (int) $File['cliente_id'] !== (int) $User['id']))
-            Json(404, ['ok' => false, 'erro' => 'Arquivo não encontrado.']);
+            Json(404, ['ok' => false, 'erro' => T('Arquivo não encontrado.')]);
         $Path = StoredFilePath($File);
         if ($Path === '')
-            Abort(404, 'Arquivo não encontrado.', 'arquivo ' . $File['id'] . ' está no banco mas não no disco');
+            Abort(404, T('Arquivo não encontrado.'), 'arquivo ' . $File['id'] . ' está no banco mas não no disco');
         header('Content-Type: application/octet-stream');
         header('Content-Length: ' . filesize($Path));
         readfile($Path);
@@ -276,7 +275,7 @@ switch ($Acao) {
 
     case 'excluir_arquivo':
         RequireRole('admin');
-        $File = Row('SELECT * FROM arquivos WHERE id = ?', [(int) Post('id')]) ?? Json(404, ['ok' => false, 'erro' => 'Arquivo não encontrado.']);
+        $File = Row('SELECT * FROM arquivos WHERE id = ?', [(int) Post('id')]) ?? Json(404, ['ok' => false, 'erro' => T('Arquivo não encontrado.')]);
         $Path = StoredFilePath($File);
         Query('DELETE FROM arquivos WHERE id = ?', [$File['id']]);
         if ($Path !== '')
@@ -287,13 +286,13 @@ switch ($Acao) {
     case 'liberar':
         RequireRole('admin');
         $File = Row('SELECT a.id, a.cliente_id, u.chave_publica FROM arquivos a JOIN usuarios u ON u.id = a.cliente_id WHERE a.id = ?',
-            [(int) Post('id')]) ?? Json(404, ['ok' => false, 'erro' => 'Arquivo não encontrado.']);
+            [(int) Post('id')]) ?? Json(404, ['ok' => false, 'erro' => T('Arquivo não encontrado.')]);
         if ((string) $File['chave_publica'] === '')
-            Json(409, ['ok' => false, 'erro' => 'O cliente ainda não fez o primeiro acesso.']);
+            Json(409, ['ok' => false, 'erro' => T('O cliente ainda não fez o primeiro acesso.')]);
         Query('INSERT OR REPLACE INTO arquivo_chaves (arquivo_id, usuario_id, chave) VALUES (?, ?, ?)',
             [$File['id'], $File['cliente_id'], PostB64('chave', 700)]);
         Json(200, ['ok' => true]);
 
     default:
-        Json(404, ['ok' => false, 'erro' => 'Ação desconhecida.']);
+        Json(404, ['ok' => false, 'erro' => T('Ação desconhecida.')]);
 }

@@ -21,6 +21,15 @@
 
     function $(sel, root) { return (root || doc).querySelector(sel); }
 
+    // Textos do idioma da página: o servidor manda as traduções em data-textos (vazio em português).
+    var textos = {};
+    try { textos = JSON.parse(doc.body.getAttribute('data-textos') || '{}'); } catch (e) { textos = {}; }
+    function t(pt, vars) {
+        var texto = textos[pt] || pt;
+        Object.keys(vars || {}).forEach(function (k) { texto = texto.split('{' + k + '}').join(vars[k]); });
+        return texto;
+    }
+
     // --- utilidades ---
 
     function toB64(buf) {
@@ -80,7 +89,7 @@
         }
         var resp = await fetch(url, opts);
         var data = await resp.json().catch(function () { return {}; });
-        if (!resp.ok) throw new Error(data.erro || 'Não foi possível concluir. Tente de novo em instantes.');
+        if (!resp.ok) throw new Error(data.erro || t('Não foi possível concluir. Tente de novo em instantes.'));
         return data;
     }
 
@@ -146,8 +155,8 @@
 
     function conferirSenhaNova(form) {
         var senha = form.elements.senha.value;
-        if (senha.length < SENHA_MINIMA) return 'A senha precisa ter pelo menos ' + SENHA_MINIMA + ' caracteres.';
-        if (senha !== form.elements.confirma.value) return 'As duas senhas não são iguais.';
+        if (senha.length < SENHA_MINIMA) return t('A senha precisa ter pelo menos {n} caracteres.', { n: SENHA_MINIMA });
+        if (senha !== form.elements.confirma.value) return t('As duas senhas não são iguais.');
         return '';
     }
 
@@ -158,9 +167,9 @@
         ev.preventDefault();
         var email = formEntrar.elements.email.value.trim();
         var senha = formEntrar.elements.senha.value;
-        if (!email || !senha) return setMsg(formEntrar, 'error', 'Informe o e-mail e a senha.');
+        if (!email || !senha) return setMsg(formEntrar, 'error', t('Informe o e-mail e a senha.'));
         setBusy(formEntrar, true);
-        setMsg(formEntrar, '', 'Entrando...');
+        setMsg(formEntrar, '', t('Entrando...'));
         try {
             var kdf = await call('sal', { email: email });
             var derivada = await derivar(senha, kdf.sal, kdf.iter);
@@ -182,7 +191,7 @@
         var problema = conferirSenhaNova(formAtivar);
         if (problema) return setMsg(formAtivar, 'error', problema);
         setBusy(formAtivar, true);
-        setMsg(formAtivar, '', 'Gerando as suas chaves. Isto leva alguns segundos...');
+        setMsg(formAtivar, '', t('Gerando as suas chaves. Isto leva alguns segundos...'));
         try {
             var sal = toB64(random(16));
             var derivada = await derivar(formAtivar.elements.senha.value, sal, Number(formAtivar.getAttribute('data-iter')));
@@ -214,7 +223,7 @@
         var problema = conferirSenhaNova(formSenha);
         if (problema) return setMsg(formSenha, 'error', problema);
         setBusy(formSenha, true);
-        setMsg(formSenha, '', 'Trocando a senha...');
+        setMsg(formSenha, '', t('Trocando a senha...'));
         try {
             var conta = await call('minha_chave');
             var atual = await derivar(formSenha.elements.atual.value, conta.sal, conta.iter);
@@ -222,14 +231,14 @@
             try {
                 privada = await abrirPrivada(atual.kek, conta.priv, conta.iv);
             } catch (e) {
-                throw new Error('A senha atual não confere.');
+                throw new Error(t('A senha atual não confere.'));
             }
             var sal = toB64(random(16));
             var nova = await derivar(formSenha.elements.senha.value, sal, Number(formSenha.getAttribute('data-iter')));
             var cifrada = await cifrarPrivada(nova.kek, privada.pkcs8);
             await call('trocar_senha', { auth_atual: atual.auth, sal: sal, auth: nova.auth, priv: cifrada.priv, iv: cifrada.iv });
             formSenha.reset();
-            setMsg(formSenha, 'ok', 'Senha trocada.');
+            setMsg(formSenha, 'ok', t('Senha trocada.'));
         } catch (err) {
             setMsg(formSenha, 'error', err.message);
         }
@@ -272,14 +281,14 @@
      */
     async function baixarArquivoDecifrado(arquivo, meta) {
         var resp = await fetch(api + '?acao=baixar&id=' + arquivo.id, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } });
-        if (!resp.ok) throw new Error('Não foi possível baixar o arquivo.');
+        if (!resp.ok) throw new Error(t('Não foi possível baixar o arquivo.'));
         var cifrado = await resp.arrayBuffer();
         var chave = await abrirChaveDoArquivo(arquivo);
         var aberto;
         try {
             aberto = await subtle.decrypt({ name: 'AES-GCM', iv: fromB64(arquivo.iv) }, chave.aes, cifrado);
         } catch (e) {
-            throw new Error('O arquivo não pôde ser decifrado. Ele pode ter sido alterado no servidor.');
+            throw new Error(t('O arquivo não pôde ser decifrado. Ele pode ter sido alterado no servidor.'));
         }
         var url = URL.createObjectURL(new Blob([aberto], { type: meta.tipo || 'application/octet-stream' }));
         var link = el('a');
@@ -303,20 +312,20 @@
     function linhaDoArquivo(arquivo, meta) {
         var item = el('li', 'file');
         var info = el('div', 'file-info');
-        info.appendChild(el('strong', '', meta ? meta.nome : 'Arquivo ainda não liberado para esta conta'));
-        info.appendChild(el('span', '', (meta ? formatSize(meta.tamanho) + ' · ' : '') + 'enviado em ' + arquivo.data));
+        info.appendChild(el('strong', '', meta ? meta.nome : t('Arquivo ainda não liberado para esta conta')));
+        info.appendChild(el('span', '', (meta ? formatSize(meta.tamanho) + ' · ' : '') + t('enviado em {data}', { data: arquivo.data })));
         item.appendChild(info);
 
         var acoes = el('div', 'file-actions');
         var status = el('span', 'file-status');
         acoes.appendChild(status);
-        if (ehAdmin && !arquivo.cliente_tem_chave) acoes.appendChild(el('span', 'tag tag-alert', 'Não liberado para o cliente'));
+        if (ehAdmin && !arquivo.cliente_tem_chave) acoes.appendChild(el('span', 'tag tag-alert', t('Não liberado para o cliente')));
         if (meta) {
-            var baixar = el('button', 'pbtn', 'Baixar');
+            var baixar = el('button', 'pbtn', t('Baixar'));
             baixar.type = 'button';
             baixar.addEventListener('click', async function () {
                 baixar.disabled = true;
-                status.textContent = 'Decifrando...';
+                status.textContent = t('Decifrando...');
                 try {
                     await baixarArquivoDecifrado(arquivo, meta);
                     status.textContent = '';
@@ -328,10 +337,10 @@
             acoes.appendChild(baixar);
         }
         if (ehAdmin) {
-            var excluir = el('button', 'pbtn pbtn-danger', 'Excluir');
+            var excluir = el('button', 'pbtn pbtn-danger', t('Excluir'));
             excluir.type = 'button';
             excluir.addEventListener('click', async function () {
-                if (!window.confirm('Excluir este arquivo? O cliente deixa de vê-lo.')) return;
+                if (!window.confirm(t('Excluir este arquivo? O cliente deixa de vê-lo.'))) return;
                 try {
                     await call('excluir_arquivo', { id: arquivo.id });
                     carregarArquivos();
@@ -349,7 +358,7 @@
         var dados = await call('arquivos', null, 'cliente=' + encodeURIComponent(clienteId));
         lista.textContent = '';
         if (!dados.arquivos.length) {
-            lista.appendChild(el('p', 'empty', 'Nenhum arquivo até agora.'));
+            lista.appendChild(el('p', 'empty', t('Nenhum arquivo até agora.')));
             return;
         }
 
@@ -373,12 +382,12 @@
 
         if (ehAdmin && pendentes.length && dados.cliente_pub) {
             var aviso = el('div', 'notice notice-aviso');
-            aviso.appendChild(el('p', '', pendentes.length + ' arquivo(s) ainda não liberado(s) para a chave atual do cliente.'));
-            var botao = el('button', 'pbtn', 'Liberar para o cliente');
+            aviso.appendChild(el('p', '', t('{n} arquivo(s) ainda não liberado(s) para a chave atual do cliente.', { n: pendentes.length })));
+            var botao = el('button', 'pbtn', t('Liberar para o cliente'));
             botao.type = 'button';
             botao.addEventListener('click', async function () {
                 botao.disabled = true;
-                botao.textContent = 'Liberando...';
+                botao.textContent = t('Liberando...');
                 try {
                     await liberarParaCliente(pendentes, dados.cliente_pub);
                     carregarArquivos();
@@ -390,7 +399,7 @@
             lista.appendChild(aviso);
         } else if (!ehAdmin && dados.arquivos.some(function (a) { return !a.chave; })) {
             lista.appendChild(el('p', 'notice notice-aviso',
-                'Alguns arquivos foram enviados antes da sua senha atual e aguardam liberação. Avise a Pignoro por mensagem.'));
+                t('Alguns arquivos foram enviados antes da sua senha atual e aguardam liberação. Avise a Pignoro por mensagem.')));
         }
         lista.appendChild(ul);
     }
@@ -401,7 +410,7 @@
     }
 
     if (lista) (async function () {
-        if (!subtle) return mostrarErroArquivos(new Error('Este navegador não permite criptografia nesta página. Use uma conexão HTTPS e um navegador atualizado.'));
+        if (!subtle) return mostrarErroArquivos(new Error(t('Este navegador não permite criptografia nesta página. Use uma conexão HTTPS e um navegador atualizado.')));
         try {
             var conta = await call('minha_chave');
             minhaPrivada = await lerPrivada(conta.uid);
@@ -413,14 +422,14 @@
             formDestravar.addEventListener('submit', async function (ev) {
                 ev.preventDefault();
                 setBusy(formDestravar, true);
-                setMsg(formDestravar, '', 'Abrindo...');
+                setMsg(formDestravar, '', t('Abrindo...'));
                 try {
                     var derivada = await derivar(formDestravar.elements.senha.value, conta.sal, conta.iter);
                     var privada;
                     try {
                         privada = await abrirPrivada(derivada.kek, conta.priv, conta.iv);
                     } catch (e) {
-                        throw new Error('Senha incorreta.');
+                        throw new Error(t('Senha incorreta.'));
                     }
                     minhaPrivada = privada.chave;
                     await guardarPrivada(conta.uid, minhaPrivada);
@@ -464,7 +473,7 @@
                 falhas = 0;
                 aoAvancar(pos / cifrado.byteLength);
             } else if (++falhas >= 4 || data.erro && resp.status !== 409) {
-                throw new Error(data.erro || 'O envio foi interrompido. Verifique a conexão e tente de novo.');
+                throw new Error(data.erro || t('O envio foi interrompido. Verifique a conexão e tente de novo.'));
             }
         }
         return inicio.envio;
@@ -500,22 +509,22 @@
         ev.preventDefault();
         var arquivos = Array.prototype.slice.call(formEnviar.elements.arquivos.files);
         var maximo = Number(formEnviar.getAttribute('data-max'));
-        if (!arquivos.length) return setMsg(formEnviar, 'error', 'Escolha pelo menos um arquivo.');
+        if (!arquivos.length) return setMsg(formEnviar, 'error', t('Escolha pelo menos um arquivo.'));
         var grande = arquivos.filter(function (f) { return f.size > maximo || f.size === 0; })[0];
-        if (grande) return setMsg(formEnviar, 'error', '"' + grande.name + '" está vazio ou passa do limite de ' + formatSize(maximo) + '.');
+        if (grande) return setMsg(formEnviar, 'error', t('"{nome}" está vazio ou passa do limite de {limite}.', { nome: grande.name, limite: formatSize(maximo) }));
 
         setBusy(formEnviar, true);
         try {
             var destinatarios = (await call('destinatarios', null, 'cliente=' + encodeURIComponent(clienteId))).destinatarios;
             for (var i = 0; i < arquivos.length; i++) {
-                var rotulo = 'Cifrando e enviando ' + (i + 1) + ' de ' + arquivos.length + ': ' + arquivos[i].name;
+                var rotulo = t('Cifrando e enviando {i} de {n}: {nome}', { i: i + 1, n: arquivos.length, nome: arquivos[i].name });
                 setMsg(formEnviar, '', rotulo);
                 await cifrarEEnviar(arquivos[i], destinatarios, function (fracao) {
                     setMsg(formEnviar, '', rotulo + ' (' + Math.round(fracao * 100) + '%)');
                 });
             }
             formEnviar.reset();
-            setMsg(formEnviar, 'ok', arquivos.length === 1 ? 'Arquivo enviado.' : arquivos.length + ' arquivos enviados.');
+            setMsg(formEnviar, 'ok', arquivos.length === 1 ? t('Arquivo enviado.') : t('{n} arquivos enviados.', { n: arquivos.length }));
             if (minhaPrivada) await carregarArquivos();
         } catch (err) {
             setMsg(formEnviar, 'error', err.message);
@@ -525,6 +534,6 @@
 
     if (!subtle && (formEntrar || formAtivar || formSenha)) {
         setMsg(formEntrar || formAtivar || formSenha, 'error',
-            'Este navegador não permite criptografia nesta página. Use uma conexão HTTPS e um navegador atualizado.');
+            t('Este navegador não permite criptografia nesta página. Use uma conexão HTTPS e um navegador atualizado.'));
     }
 })();

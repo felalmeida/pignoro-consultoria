@@ -4,11 +4,11 @@ declare(strict_types=1);
 require __DIR__ . '/../app/inicio.php';
 
 $User = RequireRole('cliente');
-$Tipos = ['investidor' => 'Investidor profissional', 'fundo' => 'Fundo de investimento', 'empresa' => 'Empresa'];
+$Tipos = ['investidor' => T('Investidor profissional'), 'fundo' => T('Fundo de investimento'), 'empresa' => T('Empresa')];
 // coluna => [rótulo, tamanho máximo]
 $Campos = [
-    'razao_social' => ['Razão social ou nome', 150], 'nome_fantasia' => ['Nome fantasia', 150], 'cnpj' => ['CNPJ ou CPF', 20],
-    'telefone' => ['Telefone', 30], 'endereco' => ['Endereço', 200], 'cidade' => ['Cidade', 80], 'uf' => ['UF', 2], 'cep' => ['CEP', 10],
+    'razao_social' => [T('Razão social ou nome'), 150], 'nome_fantasia' => [T('Nome fantasia'), 150], 'cnpj' => [T('CNPJ ou CPF'), 20],
+    'telefone' => [T('Telefone'), 30], 'endereco' => [T('Endereço'), 200], 'cidade' => [T('Cidade'), 80], 'uf' => [T('UF'), 2], 'cep' => [T('CEP'), 10],
 ];
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
@@ -19,29 +19,29 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $Values['uf'] = mb_strtoupper($Values['uf']);
 
     if ($Values['razao_social'] === '') {
-        Flash('erro', 'Preencha a razão social ou o nome.');
+        Flash('erro', T('Preencha a razão social ou o nome.'));
     } else {
         $Cols = array_keys($Values);
         Query('INSERT INTO empresas (usuario_id, atualizado_em, ' . implode(', ', $Cols) . ') VALUES (?, ?' . str_repeat(', ?', count($Cols)) . ')
             ON CONFLICT (usuario_id) DO UPDATE SET atualizado_em = excluded.atualizado_em, '
             . implode(', ', array_map(fn($c) => "$c = excluded.$c", $Cols)),
             [$User['id'], time(), ...array_values($Values)]);
-        Flash('ok', 'Cadastro salvo.');
+        Flash('ok', T('Cadastro salvo.'));
     }
     Redirect('cadastro.php');
 }
 
 $Empresa = Row('SELECT * FROM empresas WHERE usuario_id = ?', [$User['id']]) ?? [];
 
-PageHead('Cadastro', 'cadastro.php');
+PageHead(T('Cadastro'), 'cadastro.php');
 ?>
-<h1>Cadastro</h1>
-<p class="page-intro">Dados da sua empresa ou fundo.</p>
+<h1><?= E(T('Cadastro')) ?></h1>
+<p class="page-intro"><?= E(T('Dados da sua empresa ou fundo.')) ?></p>
 <form class="pform card-box" method="post">
     <?= CsrfField() ?>
-    <label class="pfield"><span>Tipo</span>
+    <label class="pfield"><span><?= E(T('Tipo')) ?></span>
         <select name="tipo">
-            <option value="">Selecione</option>
+            <option value=""><?= E(T('Selecione')) ?></option>
             <?php foreach ($Tipos as $Key => $Text): ?>
                 <option value="<?= E($Key) ?>"<?= ($Empresa['tipo'] ?? '') === $Key ? ' selected' : '' ?>><?= E($Text) ?></option>
             <?php endforeach; ?>
@@ -50,7 +50,7 @@ PageHead('Cadastro', 'cadastro.php');
         <label class="pfield"><span><?= E($Label) ?></span>
             <input type="text" name="<?= $Name ?>" maxlength="<?= $Max ?>" value="<?= E($Empresa[$Name] ?? '') ?>"<?= $Name === 'razao_social' ? ' required' : '' ?>></label>
     <?php endforeach; ?>
-    <div class="pform-foot"><button class="btn btn-primary" type="submit">Salvar</button></div>
+    <div class="pform-foot"><button class="btn btn-primary" type="submit"><?= E(T('Salvar')) ?></button></div>
 </form>
 <?php
 PageFoot();

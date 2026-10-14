@@ -63,8 +63,19 @@ function RegistroDef(string $v_Tipo): array
 {
     $Defs = RegistroDefs();
     if (!isset($Defs[$v_Tipo]))
-        Abort(404, 'Página não encontrada.');
-    return $Defs[$v_Tipo] + ['tabela' => $v_Tipo];
+        Abort(404, T('Página não encontrada.'));
+    // rótulos, opções e situações saem no idioma da página
+    $Def = $Defs[$v_Tipo];
+    foreach (['titulo', 'novo', 'intro'] as $Key)
+        $Def[$Key] = T($Def[$Key]);
+    foreach ($Def['campos'] as &$Field) {
+        $Field[0] = T($Field[0]);
+        if (isset($Field[4]))
+            $Field[4] = array_map('T', $Field[4]);
+    }
+    unset($Field);
+    $Def['situacoes'] = array_map('T', $Def['situacoes']);
+    return $Def + ['tabela' => $v_Tipo];
 }
 
 /** O cliente só altera o registro enquanto ele está na situação inicial. */
@@ -86,17 +97,17 @@ function RegistroLer(array $v_Def, array $v_Post): array
         $Value = $Type === 'longo' ? CleanText($Raw, $Max) : CleanLine($Raw, $Max);
 
         if ($Required && $Value === '')
-            return [[], 'Preencha o campo "' . $Label . '".'];
+            return [[], T('Preencha o campo "{campo}".', ['campo' => $Label])];
         if ($Type === 'email' && $Value !== '' && !filter_var($Value, FILTER_VALIDATE_EMAIL))
-            return [[], 'Informe um e-mail válido.'];
+            return [[], T('Informe um e-mail válido.')];
         if ($Type === 'data' && $Value !== '' && FormatDate($Value) === '')
-            return [[], 'Informe uma data válida em "' . $Label . '".'];
+            return [[], T('Informe uma data válida em "{campo}".', ['campo' => $Label])];
         if ($Type === 'opcao' && !isset($Field[4][$Value]))
-            return [[], 'Escolha uma opção em "' . $Label . '".'];
+            return [[], T('Escolha uma opção em "{campo}".', ['campo' => $Label])];
         if ($Type === 'dinheiro') {
             $Value = ParseMoney($Value);
             if ($Value === null)
-                return [[], 'Informe um valor válido em "' . $Label . '", como 1.234,56.'];
+                return [[], T('Informe um valor válido em "{campo}", como {exemplo}.', ['campo' => $Label, 'exemplo' => FormatMoney(123456)])];
         }
         $Values[$Name] = $Value;
     }
@@ -140,21 +151,21 @@ function RegistroCelula(array $v_Field, $v_Value): string
 function RegistroTabela(array $v_Def, array $v_Rows, callable $v_Acoes): void
 {
     if (!$v_Rows) {
-        echo '<p class="empty">Nenhum registro até agora.</p>';
+        echo '<p class="empty">' . E(T('Nenhum registro até agora.')) . '</p>';
         return;
     }
     echo '<div class="table-wrap"><table class="table"><thead><tr>';
     foreach ($v_Def['campos'] as $Field)
         echo '<th>' . E($Field[0]) . '</th>';
     if ($v_Def['situacoes'])
-        echo '<th>Situação</th>';
-    echo '<th><span class="sr-only">Ações</span></th></tr></thead><tbody>';
+        echo '<th>' . E(T('Situação')) . '</th>';
+    echo '<th><span class="sr-only">' . E(T('Ações')) . '</span></th></tr></thead><tbody>';
     foreach ($v_Rows as $Row) {
         echo '<tr>';
         foreach ($v_Def['campos'] as $Name => $Field)
             echo '<td data-label="' . E($Field[0]) . '">' . RegistroCelula($Field, $Row[$Name]) . '</td>';
         if ($v_Def['situacoes'])
-            echo '<td data-label="Situação"><span class="tag">' . E($v_Def['situacoes'][$Row['situacao']] ?? $Row['situacao']) . '</span></td>';
+            echo '<td data-label="' . E(T('Situação')) . '"><span class="tag">' . E($v_Def['situacoes'][$Row['situacao']] ?? $Row['situacao']) . '</span></td>';
         echo '<td class="table-actions">' . $v_Acoes($Row) . '</td></tr>';
     }
     echo '</tbody></table></div>';
@@ -181,7 +192,7 @@ function RegistroCampos(array $v_Def, array $v_Values): void
         } else {
             $Html = ['email' => 'email', 'data' => 'date'][$Type] ?? 'text';
             echo '<input type="' . $Html . '" ' . $Attrs . ' value="' . E((string) $Value) . '"'
-                . ($Type === 'dinheiro' ? ' inputmode="decimal" placeholder="0,00"' : '') . '>';
+                . ($Type === 'dinheiro' ? ' inputmode="decimal" placeholder="' . FormatMoney(0) . '"' : '') . '>';
         }
         echo '</label>';
     }

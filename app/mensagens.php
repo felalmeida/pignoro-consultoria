@@ -7,7 +7,7 @@ function MensagemEnviar(int $v_ClientId, int $v_AuthorId): string
 {
     $Text = CleanText(is_string($_POST['texto'] ?? null) ? $_POST['texto'] : '', 3000);
     if ($Text === '')
-        return 'Escreva a mensagem antes de enviar.';
+        return T('Escreva a mensagem antes de enviar.');
     Query('INSERT INTO mensagens (cliente_id, autor_id, texto, criado_em) VALUES (?, ?, ?, ?)', [$v_ClientId, $v_AuthorId, $Text, time()]);
     return '';
 }
@@ -24,7 +24,7 @@ function MensagemConversa(int $v_ClientId, array $v_Reader, string $v_Action): v
 
     echo '<div class="thread">';
     if (!$Rows)
-        echo '<p class="empty">Nenhuma mensagem até agora.</p>';
+        echo '<p class="empty">' . E(T('Nenhuma mensagem até agora.')) . '</p>';
     foreach ($Rows as $Row) {
         $Mine = (int) $Row['autor_id'] === (int) $v_Reader['id'];
         echo '<article class="msg' . ($Mine ? ' msg-mine' : '') . '"><header><strong>'
@@ -33,6 +33,6 @@ function MensagemConversa(int $v_ClientId, array $v_Reader, string $v_Action): v
     }
     echo '</div><form class="pform card-box" method="post" action="' . E($v_Action) . '">' . CsrfField()
         . '<input type="hidden" name="acao" value="mensagem">'
-        . '<label class="pfield pfield-wide"><span>Nova mensagem</span><textarea name="texto" rows="4" maxlength="3000" required></textarea></label>'
-        . '<div class="pform-foot"><button class="btn btn-primary" type="submit">Enviar</button></div></form>';
+        . '<label class="pfield pfield-wide"><span>' . E(T('Nova mensagem')) . '</span><textarea name="texto" rows="4" maxlength="3000" required></textarea></label>'
+        . '<div class="pform-foot"><button class="btn btn-primary" type="submit">' . E(T('Enviar')) . '</button></div></form>';
 }

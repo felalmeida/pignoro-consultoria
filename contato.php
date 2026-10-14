@@ -16,6 +16,10 @@ header('X-Robots-Tag: noindex');
 
 $Config = require __DIR__ . '/config/config.php';
 require __DIR__ . '/app/email.php';
+require __DIR__ . '/app/idioma.php';
+
+// idioma da página que enviou o formulário: só as respostas ao visitante mudam; o e-mail interno sai em português
+Lang(ValidLang($_POST['idioma'] ?? $_GET['idioma'] ?? null) ?? 'pt');
 
 function Respond(int $v_Status, array $v_Data): void
 {
@@ -80,7 +84,7 @@ function RewriteDataFile($v_Handle, string $v_Content): void
 function Fail(string $v_Reason): void
 {
     error_log('contato.php: ' . $v_Reason);
-    Respond(503, ['ok' => false, 'erro' => 'Formulário indisponível no momento.']);
+    Respond(503, ['ok' => false, 'erro' => T('Formulário indisponível no momento.')]);
 }
 
 /** Segredo aleatório para assinar o token; criado no primeiro uso. */
@@ -252,15 +256,15 @@ $Method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 if ($Method === 'GET') {
     if (isset($_GET['token'])) {
         if (!RateLimitOk('token|' . ClientKey(), (int) $Config['limite_tokens'], (int) $Config['limite_janela']))
-            Respond(429, ['ok' => false, 'erro' => 'Muitas tentativas. Tente mais tarde.']);
+            Respond(429, ['ok' => false, 'erro' => T('Muitas tentativas. Tente mais tarde.')]);
         Respond(200, ['token' => MakeToken()]);
     }
-    Respond(405, ['ok' => false, 'erro' => 'Método não permitido.']);
+    Respond(405, ['ok' => false, 'erro' => T('Método não permitido.')]);
 }
 
 if ($Method !== 'POST') {
     header('Allow: GET, POST');
-    Respond(405, ['ok' => false, 'erro' => 'Método não permitido.']);
+    Respond(405, ['ok' => false, 'erro' => T('Método não permitido.')]);
 }
 
 // campo-armadilha: pessoas não o veem; robôs o preenchem. Finge sucesso.
@@ -269,13 +273,13 @@ if (Field('website') !== '')
 
 // toda tentativa conta para o limite, inclusive as que falham na validação
 if (!RateLimitOk('envio|' . ClientKey(), (int) $Config['limite_envios'], (int) $Config['limite_janela']))
-    Respond(429, ['ok' => false, 'erro' => 'Muitos envios em pouco tempo. Tente mais tarde.']);
+    Respond(429, ['ok' => false, 'erro' => T('Muitos envios em pouco tempo. Tente mais tarde.')]);
 
 $Age = TokenAge(Field('token'));
 if ($Age === null || $Age > (int) $Config['tempo_maximo'])
-    Respond(400, ['ok' => false, 'erro' => 'A página ficou aberta por muito tempo. Recarregue e envie novamente.']);
+    Respond(400, ['ok' => false, 'erro' => T('A página ficou aberta por muito tempo. Recarregue e envie novamente.')]);
 if ($Age < (int) $Config['tempo_minimo'])
-    Respond(400, ['ok' => false, 'erro' => 'Envio rápido demais. Aguarde alguns segundos e tente de novo.']);
+    Respond(400, ['ok' => false, 'erro' => T('Envio rápido demais. Aguarde alguns segundos e tente de novo.')]);
 
 $Tipo = Field('tipo') === 'agendar' ? 'agendar' : 'mensagem';
 $Nome = CleanLine(Field('nome'), 100);
@@ -288,19 +292,19 @@ $Data = CleanLine(Field('data'), 10);
 $Periodo = CleanLine(Field('periodo'), 20);
 
 if ($Nome === '' || $Mensagem === '')
-    Respond(422, ['ok' => false, 'erro' => 'Preencha nome e mensagem.']);
+    Respond(422, ['ok' => false, 'erro' => T('Preencha nome e mensagem.')]);
 if (!filter_var($Email, FILTER_VALIDATE_EMAIL))
-    Respond(422, ['ok' => false, 'erro' => 'Informe um e-mail válido.']);
+    Respond(422, ['ok' => false, 'erro' => T('Informe um e-mail válido.')]);
 if ($Data !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $Data))
     $Data = '';
 
 // teto somando todos os visitantes: só conta envios que passaram por toda a validação
 if (!RateLimitOk('envio|total', (int) $Config['limite_total'], (int) $Config['limite_janela']))
-    Respond(429, ['ok' => false, 'erro' => 'Muitos envios em pouco tempo. Tente mais tarde.']);
+    Respond(429, ['ok' => false, 'erro' => T('Muitos envios em pouco tempo. Tente mais tarde.')]);
 
 // cada token vale para um único envio
 if (!ConsumeToken(Field('token'), (int) $Config['tempo_maximo']))
-    Respond(400, ['ok' => false, 'erro' => 'Este formulário já foi enviado. Recarregue a página para enviar outro.']);
+    Respond(400, ['ok' => false, 'erro' => T('Este formulário já foi enviado. Recarregue a página para enviar outro.')]);
 
 $Linhas = [
     'Tipo: ' . ($Tipo === 'agendar' ? 'Pedido de agendamento' : 'Mensagem'),
@@ -331,7 +335,7 @@ $Sent = SendMail($Config, (string) $Config['destino'], $Email, $Subject, $Body);
 if (!$Sent) {
     error_log('contato.php: mensagem não enviada para ' . $Config['destino']);
     // 500 e não 502: o Cloudflare troca respostas 502 da origem pela página de erro dele
-    Respond(500, ['ok' => false, 'erro' => 'Não foi possível enviar a mensagem agora. Tente novamente em alguns minutos.']);
+    Respond(500, ['ok' => false, 'erro' => T('Não foi possível enviar a mensagem agora. Tente novamente em alguns minutos.')]);
 }
 
 Respond(200, ['ok' => true]);

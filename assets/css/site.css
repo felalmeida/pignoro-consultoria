@@ -274,6 +274,41 @@ svg {
     color: var(--on-dark);
 }
 
+/* seletor de idioma (site e área do cliente) */
+
+.lang-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--line-dark);
+    border-radius: 999px;
+}
+
+.lang-switch a,
+.site-nav .lang-switch a {
+    padding: 3px 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+    color: var(--on-dark-soft);
+    border-radius: 999px;
+}
+
+.lang-switch a:hover,
+.site-nav .lang-switch a:hover {
+    color: var(--on-dark);
+}
+
+.lang-switch a[aria-current="true"],
+.site-nav .lang-switch a[aria-current="true"] {
+    color: var(--ink-900);
+    background: var(--cyan);
+}
+
 .nav-toggle {
     display: none;
     width: 44px;

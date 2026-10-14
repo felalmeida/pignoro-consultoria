@@ -9,7 +9,9 @@ framework: o `contato.php`, que envia o formulário por e-mail, e a área do cli
 
 | Caminho | Conteúdo |
 | --- | --- |
-| `index.html` | Todo o texto do site |
+| `index.html`, `en/index.html`, `es/index.html` | Texto do site em português, inglês e espanhol |
+| `app/idioma.php`, `app/idiomas/` | Traduções da área do cliente, do formulário e do e-mail de boas-vindas |
+| `app/ajuda/` | Manual da área do cliente, um arquivo por idioma |
 | `assets/css/site.css` | Visual (cores no bloco `:root`) |
 | `assets/js/config.js` | Link de agenda e Google Analytics |
 | `assets/js/site.js` | Menu, formulário e animações |
@@ -63,6 +65,24 @@ passam a abrir esse link.
 O Cloudflare guarda CSS e JavaScript por algumas horas. Ao alterar `site.css`, `site.js` ou
 `config.js`, aumente o número em `?v=` nas três referências do `index.html`, para os visitantes
 receberem a versão nova na hora.
+
+## Idiomas
+
+O site existe em português, inglês e espanhol. O seletor PT · EN · ES fica no menu do site e no
+topo da área do cliente.
+
+- **Site público:** três páginas estáticas, `index.html` (português), `en/index.html` e
+  `es/index.html`. Ao alterar um texto em português, altere também as outras duas. Os valores
+  enviados pelo formulário de contato (assunto e período) continuam em português nas três, para o
+  e-mail interno chegar sempre igual; só o que o visitante lê muda.
+- **Área do cliente:** os textos ficam em português no código, dentro de `T('...')`, e as
+  traduções em `app/idiomas/en.php` e `es.php` (e `en-js.php`, `es-js.php` para o JavaScript),
+  com o texto em português como chave. Texto novo sem tradução aparece em português.
+- **Idioma de cada cliente:** escolhido pelo administrador ao criar o cliente (e alterável na ficha
+  dele). É o idioma do e-mail de boas-vindas e o padrão da área do cliente. Quando o cliente usa o
+  seletor, a escolha fica gravada na conta e num cookie.
+- **Formatos:** em inglês, datas em mês/dia/ano e valores como 1,234.56; em português e espanhol,
+  dia/mês/ano e 1.234,56.
 
 ## Área do cliente
 

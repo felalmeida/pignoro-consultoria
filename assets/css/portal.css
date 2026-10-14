@@ -668,7 +668,7 @@ body.portal {
         padding: 20px;
     }
 
-    .portal-user span {
+    .portal-user-name {
         display: none;
     }
 
@@ -697,4 +697,8 @@ body.portal {
     .table-actions {
         text-align: left;
     }
+}
+
+.portal-main h1 + .notice {
+    margin-top: 20px;
 }

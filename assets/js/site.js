@@ -8,6 +8,33 @@
     function $(sel, root) { return (root || doc).querySelector(sel); }
     function $all(sel, root) { return Array.prototype.slice.call((root || doc).querySelectorAll(sel)); }
 
+    // --- idioma: pt (padrão), en ou es, conforme o atributo lang da página ---
+    var idioma = (doc.documentElement.lang || 'pt').slice(0, 2);
+    var textos = {
+        en: {
+            'Solicitar agendamento': 'Request a meeting',
+            'Enviar': 'Send',
+            'Conte em poucas linhas o que gostaria de discutir.': 'Tell us in a few lines what you would like to discuss.',
+            'Preencha nome, um e-mail válido e a mensagem.': 'Please fill in your name, a valid e-mail and the message.',
+            'Enviando...': 'Sending...',
+            'Pedido recebido. Vamos confirmar o horário por e-mail ou telefone.': 'Request received. We will confirm the time by e-mail or phone.',
+            'Mensagem enviada. Respondemos em até um dia útil.': 'Message sent. We reply within one business day.',
+            'Não foi possível enviar agora. Tente novamente em alguns minutos.': 'Your message could not be sent right now. Please try again in a few minutes.'
+        },
+        es: {
+            'Solicitar agendamento': 'Solicitar una reunión',
+            'Enviar': 'Enviar',
+            'Conte em poucas linhas o que gostaria de discutir.': 'Cuéntenos en pocas líneas lo que le gustaría conversar.',
+            'Preencha nome, um e-mail válido e a mensagem.': 'Complete su nombre, un correo electrónico válido y el mensaje.',
+            'Enviando...': 'Enviando...',
+            'Pedido recebido. Vamos confirmar o horário por e-mail ou telefone.': 'Solicitud recibida. Confirmaremos el horario por correo electrónico o teléfono.',
+            'Mensagem enviada. Respondemos em até um dia útil.': 'Mensaje enviado. Respondemos en un plazo de un día hábil.',
+            'Não foi possível enviar agora. Tente novamente em alguns minutos.': 'No fue posible enviar ahora. Inténtelo de nuevo en unos minutos.'
+        }
+    };
+    if (!textos[idioma]) idioma = 'pt';
+    function t(pt) { return (textos[idioma] && textos[idioma][pt]) || pt; }
+
     // --- Google Analytics 4 (opcional) ---
     if (cfg.analyticsId) {
         var ga = doc.createElement('script');
@@ -65,15 +92,15 @@
         if (radio) radio.checked = true;
         var agendar = mode === 'agendar';
         if (agendaRow) agendaRow.hidden = !agendar;
-        if (submitBtn) submitBtn.textContent = agendar ? 'Solicitar agendamento' : 'Enviar';
+        if (submitBtn) submitBtn.textContent = agendar ? t('Solicitar agendamento') : t('Enviar');
         var msg = form.elements.mensagem;
-        if (msg) msg.placeholder = agendar ? 'Conte em poucas linhas o que gostaria de discutir.' : '';
+        if (msg) msg.placeholder = agendar ? t('Conte em poucas linhas o que gostaria de discutir.') : '';
     }
 
     function loadToken() {
         if (token || !form) return;
         token = 'pending';
-        fetch(form.getAttribute('action') + '?token=1', { headers: { 'Accept': 'application/json' } })
+        fetch(form.getAttribute('action') + '?token=1&idioma=' + idioma, { headers: { 'Accept': 'application/json' } })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) { token = data && data.token ? data.token : null; })
             .catch(function () { token = null; });
@@ -118,13 +145,14 @@
         form.addEventListener('submit', function (ev) {
             ev.preventDefault();
             if (!validate()) {
-                setStatus('error', 'Preencha nome, um e-mail válido e a mensagem.');
+                setStatus('error', t('Preencha nome, um e-mail válido e a mensagem.'));
                 return;
             }
             var data = new FormData(form);
             data.append('token', token && token !== 'pending' ? token : '');
+            data.append('idioma', idioma);
             submitBtn.disabled = true;
-            setStatus('', 'Enviando...');
+            setStatus('', t('Enviando...'));
 
             fetch(form.getAttribute('action'), { method: 'POST', body: data, headers: { 'Accept': 'application/json' } })
                 .then(function (r) {
@@ -140,15 +168,15 @@
                         setMode('mensagem');
                         token = null;
                         setStatus('ok', agendar
-                            ? 'Pedido recebido. Vamos confirmar o horário por e-mail ou telefone.'
-                            : 'Mensagem enviada. Respondemos em até um dia útil.');
+                            ? t('Pedido recebido. Vamos confirmar o horário por e-mail ou telefone.')
+                            : t('Mensagem enviada. Respondemos em até um dia útil.'));
                         track('contato_formulario', { tipo: agendar ? 'agendar' : 'mensagem' });
                     } else {
-                        setStatus('error', res.body.erro || 'Não foi possível enviar agora. Tente novamente em alguns minutos.');
+                        setStatus('error', res.body.erro || t('Não foi possível enviar agora. Tente novamente em alguns minutos.'));
                     }
                 })
                 .catch(function () {
-                    setStatus('error', 'Não foi possível enviar agora. Tente novamente em alguns minutos.');
+                    setStatus('error', t('Não foi possível enviar agora. Tente novamente em alguns minutos.'));
                 })
                 .then(function () { submitBtn.disabled = false; });
         });
