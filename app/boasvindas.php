@@ -173,7 +173,9 @@ function SendWelcome(array $v_Config, array $v_Client, string $v_ActivationPath)
 {
     $SiteUrl = SiteUrl();
     [$Subject, $Text, $Html] = WelcomeMail($v_Client, $SiteUrl . $v_ActivationPath, $SiteUrl, ValidLang($v_Client['idioma'] ?? null) ?? 'pt');
-    $Sent = SendMail($v_Config, (string) $v_Client['email'], '', $Subject, $Text, $Html);
+    // respostas do cliente vão para o endereço de contato da Pignoro (destino do formulário)
+    $ReplyTo = filter_var((string) ($v_Config['destino'] ?? ''), FILTER_VALIDATE_EMAIL) ? (string) $v_Config['destino'] : '';
+    $Sent = SendMail($v_Config, (string) $v_Client['email'], $ReplyTo, $Subject, $Text, $Html);
     if (!$Sent)
         error_log('[area do cliente] e-mail de boas-vindas não enviado para o cliente ' . ($v_Client['id'] ?? '?'));
     return $Sent;
