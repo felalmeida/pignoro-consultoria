@@ -153,7 +153,10 @@ function InCidr(string $v_Ip, string $v_Cidr): bool
     return (ord($IpBin[$Bytes]) & $Mask) === (ord($NetBin[$Bytes]) & $Mask);
 }
 
-/** IP do visitante. O cabeçalho do Cloudflare só vale se a conexão vier mesmo do Cloudflare. */
+/**
+ * IP do visitante. Os cabeçalhos de IP só valem se a conexão vier do Cloudflare ou de um
+ * proxy da própria infraestrutura (config.php): o do Cloudflare, ou o último de X-Forwarded-For.
+ */
 function ClientIp(): string
 {
     global $Config;
@@ -162,14 +165,17 @@ function ClientIp(): string
         return $Ip;
     $Remote = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
     $Ip = filter_var($Remote, FILTER_VALIDATE_IP) ? $Remote : '0.0.0.0';
-    $Forwarded = (string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? '');
-    if ($Forwarded !== '' && filter_var($Forwarded, FILTER_VALIDATE_IP)) {
-        foreach ((array) ($Config['redes_cloudflare'] ?? []) as $Cidr) {
-            if (InCidr($Ip, (string) $Cidr)) {
-                $Ip = $Forwarded;
-                break;
-            }
+    $Chain = explode(',', (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''));
+    $Candidates = [(string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? ''), trim((string) end($Chain))];
+    $Nets = array_merge((array) ($Config['redes_cloudflare'] ?? []), (array) ($Config['proxies_confiaveis'] ?? []));
+    foreach ($Nets as $Cidr) {
+        if (!InCidr($Remote, (string) $Cidr))
+            continue;
+        foreach ($Candidates as $Forwarded) {
+            if ($Forwarded !== '' && filter_var($Forwarded, FILTER_VALIDATE_IP))
+                return $Ip = $Forwarded;
         }
+        break;
     }
     return $Ip;
 }

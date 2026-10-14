@@ -267,25 +267,34 @@ function InCidr(string $v_Ip, string $v_Cidr): bool
     return (ord($IpBin[$Bytes]) & $Mask) === (ord($NetBin[$Bytes]) & $Mask);
 }
 
-/** Conexão vinda do Cloudflare: só então os cabeçalhos dele são confiáveis. */
-function FromCloudflare(): bool
+/**
+ * Conexão vinda do Cloudflare ou de um proxy da própria infraestrutura (config.php).
+ * Só então os cabeçalhos de IP e de HTTPS informados por eles são aceitos.
+ */
+function FromTrustedProxy(): bool
 {
     global $Config;
     $Remote = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
-    foreach ((array) ($Config['redes_cloudflare'] ?? []) as $Cidr) {
+    $Nets = array_merge((array) ($Config['redes_cloudflare'] ?? []), (array) ($Config['proxies_confiaveis'] ?? []));
+    foreach ($Nets as $Cidr) {
         if (InCidr($Remote, (string) $Cidr))
             return true;
     }
     return false;
 }
 
+/** IP do visitante: o do Cloudflare, ou o último que o proxy acrescentou em X-Forwarded-For. */
 function ClientIp(): string
 {
     $Remote = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
     $Ip = filter_var($Remote, FILTER_VALIDATE_IP) ? $Remote : '0.0.0.0';
-    $Forwarded = (string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? '');
-    if ($Forwarded !== '' && filter_var($Forwarded, FILTER_VALIDATE_IP) && FromCloudflare())
-        $Ip = $Forwarded;
+    if (!FromTrustedProxy())
+        return $Ip;
+    $Chain = explode(',', (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''));
+    foreach ([(string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? ''), trim((string) end($Chain))] as $Forwarded) {
+        if ($Forwarded !== '' && filter_var($Forwarded, FILTER_VALIDATE_IP))
+            return $Forwarded;
+    }
     return $Ip;
 }
 
@@ -293,7 +302,10 @@ function IsHttps(): bool
 {
     if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
         return true;
-    return FromCloudflare() && str_contains((string) ($_SERVER['HTTP_CF_VISITOR'] ?? ''), '"https"');
+    if (!FromTrustedProxy())
+        return false;
+    return strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https'
+        || str_contains((string) ($_SERVER['HTTP_CF_VISITOR'] ?? ''), '"https"');
 }
 
 /**

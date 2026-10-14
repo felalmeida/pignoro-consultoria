@@ -33,6 +33,13 @@ return [
     // o formulário recusa os envios e registra o motivo no log de erros.
     'pasta_dados' => '',
 
+    // Proxies da própria infraestrutura na frente do site (proxy reverso, rede do Docker).
+    // Quando a conexão chega de uma destas redes, valem os cabeçalhos CF-Connecting-IP,
+    // X-Forwarded-For e X-Forwarded-Proto, usados para identificar o visitante nos limites
+    // e para marcar o cookie de sessão como seguro. Esvazie se o Apache recebe os visitantes
+    // direto e a rede local não é de confiança.
+    'proxies_confiaveis' => ['127.0.0.0/8', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '::1/128', 'fc00::/7'],
+
     // Redes do Cloudflare (https://www.cloudflare.com/ips/). O IP informado no cabeçalho
     // CF-Connecting-IP só é aceito quando a conexão chega de uma destas redes.
     'redes_cloudflare' => [
