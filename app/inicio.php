@@ -89,20 +89,47 @@ function DataDir(): string
 function FilesRoot(): string
 {
     global $Config;
+    static $Checked = null;
+    if ($Checked !== null)
+        return $Checked;
+
     $Dir = rtrim((string) ($Config['pasta_arquivos'] ?? ''), '/');
     if ($Dir === '')
         $Dir = dirname(__DIR__) . '/arquivos';
-    if ((!is_dir($Dir) && !@mkdir($Dir, 0700, true) && !is_dir($Dir)) || !is_writable($Dir))
-        Abort(503, 'Área de arquivos indisponível no momento.', 'pasta de arquivos inexistente ou sem permissão de escrita: ' . $Dir);
-    return $Dir;
+
+    $Problem = '';
+    if (!file_exists($Dir) && !@mkdir($Dir, 0700, true) && !is_dir($Dir))
+        $Problem = 'não existe e não pôde ser criada';
+    elseif (is_link($Dir) || !is_dir($Dir))
+        $Problem = 'não é uma pasta real';
+    elseif ((fileperms($Dir) & 0002) !== 0 && !@chmod($Dir, 0700))
+        $Problem = 'aceita gravação de qualquer usuário (use dono www-data e permissão 700, não 777)';
+    elseif (!is_writable($Dir))
+        $Problem = 'está sem permissão de escrita';
+    if ($Problem !== '')
+        Abort(503, 'Área de arquivos indisponível no momento.', 'pasta de arquivos ' . $Problem . ': ' . $Dir);
+
+    return $Checked = $Dir;
 }
 
-/** Pasta de arquivos de um cliente, criada no primeiro envio. */
+/**
+ * Pasta de arquivos de um cliente, criada no primeiro envio com acesso só para o usuário do PHP.
+ * Recusa link simbólico ou pasta de outro dono, para ninguém mais no servidor desviar as gravações.
+ */
 function ClientFilesDir(int $v_ClientId): string
 {
     $Dir = FilesRoot() . '/' . $v_ClientId;
-    if (!is_dir($Dir) && !@mkdir($Dir, 0700) && !is_dir($Dir))
-        Abort(503, 'Área de arquivos indisponível no momento.', 'pasta do cliente não pôde ser criada: ' . $Dir);
+    $Problem = '';
+    if (!file_exists($Dir) && !is_link($Dir) && !@mkdir($Dir, 0700) && !is_dir($Dir))
+        $Problem = 'não pôde ser criada';
+    elseif (is_link($Dir) || !is_dir($Dir))
+        $Problem = 'não é uma pasta real';
+    elseif (function_exists('posix_geteuid') && fileowner($Dir) !== posix_geteuid())
+        $Problem = 'pertence a outro usuário';
+    elseif ((fileperms($Dir) & 0077) !== 0 && !@chmod($Dir, 0700))
+        $Problem = 'está acessível a outros usuários';
+    if ($Problem !== '')
+        Abort(503, 'Área de arquivos indisponível no momento.', 'pasta do cliente ' . $Problem . ': ' . $Dir);
     return $Dir;
 }
 
@@ -114,11 +141,13 @@ function ClientFilesDir(int $v_ClientId): string
 function StoredFilePath(array $v_File): string
 {
     $Name = basename((string) $v_File['armazenado']);
-    $Path = FilesRoot() . '/' . (int) $v_File['cliente_id'] . '/' . $Name;
-    if (is_file($Path))
+    $Dir = FilesRoot() . '/' . (int) $v_File['cliente_id'];
+    $Path = $Dir . '/' . $Name;
+    // só arquivo comum, em pasta real: link simbólico plantado no caminho não é seguido
+    if (!is_link($Dir) && !is_link($Path) && is_file($Path))
         return $Path;
     $Old = DataDir() . '/arquivos/' . $Name;
-    if (!is_file($Old))
+    if (is_link($Old) || !is_file($Old))
         return '';
     ClientFilesDir((int) $v_File['cliente_id']);
     return @rename($Old, $Path) ? $Path : $Old;
