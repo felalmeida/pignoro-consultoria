@@ -12,6 +12,7 @@ framework: o `contato.php`, que envia o formulário por e-mail, e a área do cli
 | `index.html`, `en/index.html`, `es/index.html` | Texto do site em português, inglês e espanhol |
 | `app/idioma.php`, `app/idiomas/` | Traduções da área do cliente, do formulário e do e-mail de boas-vindas |
 | `app/ajuda/` | Manual da área do cliente, um arquivo por idioma |
+| `termos/index.html` | Termos de Uso e Política de Privacidade (em português), copiados do site anterior |
 | `assets/css/site.css` | Visual (cores no bloco `:root`) |
 | `assets/js/config.js` | Link de agenda e Google Analytics |
 | `assets/js/site.js` | Menu, formulário e animações |
