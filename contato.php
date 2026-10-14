@@ -153,31 +153,41 @@ function InCidr(string $v_Ip, string $v_Cidr): bool
     return (ord($IpBin[$Bytes]) & $Mask) === (ord($NetBin[$Bytes]) & $Mask);
 }
 
+function InNets(string $v_Ip, array $v_Nets): bool
+{
+    foreach ($v_Nets as $Cidr) {
+        if (InCidr($v_Ip, (string) $Cidr))
+            return true;
+    }
+    return false;
+}
+
 /**
- * IP do visitante. Os cabeçalhos de IP só valem se a conexão vier do Cloudflare ou de um
- * proxy da própria infraestrutura (config.php): o do Cloudflare, ou o último de X-Forwarded-For.
+ * IP do visitante. Parte de quem conectou e anda para trás em X-Forwarded-For enquanto o salto
+ * for um proxy da própria infraestrutura; o primeiro endereço que não é proxy é o visitante.
+ * O cabeçalho CF-Connecting-IP só vale quando o salto anterior é comprovadamente do Cloudflare.
+ * Assim, um cabeçalho forjado pelo visitante nunca é aceito como IP dele.
  */
 function ClientIp(): string
 {
     global $Config;
-    static $Ip = null;
-    if ($Ip !== null)
-        return $Ip;
+    static $Cached = null;
+    if ($Cached !== null)
+        return $Cached;
     $Remote = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
-    $Ip = filter_var($Remote, FILTER_VALIDATE_IP) ? $Remote : '0.0.0.0';
-    $Chain = explode(',', (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''));
-    $Candidates = [(string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? ''), trim((string) end($Chain))];
-    $Nets = array_merge((array) ($Config['redes_cloudflare'] ?? []), (array) ($Config['proxies_confiaveis'] ?? []));
-    foreach ($Nets as $Cidr) {
-        if (!InCidr($Remote, (string) $Cidr))
-            continue;
-        foreach ($Candidates as $Forwarded) {
-            if ($Forwarded !== '' && filter_var($Forwarded, FILTER_VALIDATE_IP))
-                return $Ip = $Forwarded;
-        }
-        break;
+    $Hops = array_merge([$Remote], array_reverse(array_map('trim', explode(',', (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? '')))));
+    $Cloudflare = (string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? '');
+    $Ip = '0.0.0.0';
+    foreach ($Hops as $Hop) {
+        if (!filter_var($Hop, FILTER_VALIDATE_IP))
+            break;
+        $Ip = $Hop;
+        if (InNets($Hop, (array) ($Config['redes_cloudflare'] ?? [])))
+            return $Cached = (filter_var($Cloudflare, FILTER_VALIDATE_IP) ? $Cloudflare : $Hop);
+        if (!InNets($Hop, (array) ($Config['proxies_confiaveis'] ?? [])))
+            break;
     }
-    return $Ip;
+    return $Cached = ($Ip);
 }
 
 /**
