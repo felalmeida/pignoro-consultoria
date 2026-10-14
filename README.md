@@ -116,6 +116,11 @@ clientes, respondem mensagens, mudam a situação de créditos e operações e e
 
 ### Instalação
 
+A área do cliente responde em `https://cliente.pignoro.felipealmeidaconsultoria.com.br/cliente/`
+(`url_area_cliente` em `config/config.php` e `areaClienteUrl` em `assets/js/config.js`). Quem abre
+`/cliente/` pelo endereço do site é levado para lá. O subdomínio está como "DNS only" no Cloudflare
+e usa o certificado do Let's Encrypt emitido no servidor para `pignoro...` e `*.pignoro...`.
+
 1. O PHP precisa da extensão SQLite: `apt install php8.3-sqlite3` (e reiniciar o Apache ou o PHP-FPM).
 2. O banco `portal.sqlite` é criado sozinho dentro da pasta de dados (`config/dados` ou `pasta_dados`),
    a mesma do formulário de contato e com as mesmas exigências.

@@ -17,5 +17,5 @@ window.SITE_CONFIG = {
     // (ex.: 'https://cliente.exemplo.com.br/'). Enquanto ela estiver no mesmo endereço do site,
     // Google e PostHog NÃO são carregados, mesmo com os IDs preenchidos: um script de terceiros
     // no mesmo endereço teria acesso à sessão e às chaves dos clientes e poderia abrir os arquivos.
-    areaClienteUrl: ''
+    areaClienteUrl: 'https://cliente.pignoro.felipealmeidaconsultoria.com.br/'
 };
