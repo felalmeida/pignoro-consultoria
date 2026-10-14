@@ -77,6 +77,8 @@ clientes, respondem mensagens, mudam a situação de créditos e operações e e
 3. O site precisa estar em HTTPS: fora dele o navegador não oferece as funções de criptografia.
 4. Envio de arquivos de até 50 MB: o arquivo cifrado sobe em partes de 512 KB, então os limites
    padrão do PHP (`upload_max_filesize`, `post_max_size`) e de proxies não precisam ser alterados.
+   A pasta temporária do PHP (`upload_tmp_dir` ou `/tmp`) precisa aceitar gravação pelo usuário do
+   servidor web: o PHP guarda nela todo corpo de requisição acima de 16 KB e, sem isso, descarta os dados.
 5. Crie o primeiro administrador, com o mesmo usuário do servidor web:
 
    ```

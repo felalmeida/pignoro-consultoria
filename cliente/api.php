@@ -180,6 +180,15 @@ switch ($Acao) {
             Json(409, ['ok' => false, 'recebido' => $Received, 'erro' => 'Parte fora de ordem.']);
 
         $Chunk = (string) file_get_contents('php://input', false, null, 0, ENVIO_PARTE + 1);
+        // O PHP guarda em arquivo temporário todo corpo de requisição acima de 16 KB. Se a pasta
+        // temporária não aceita gravação, o corpo chega vazio aqui, embora o navegador o tenha enviado.
+        if ($Chunk === '' && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+            $Tmp = (string) (ini_get('upload_tmp_dir') ?: sys_get_temp_dir());
+            Abort(500, 'O servidor descartou os dados enviados: o PHP não consegue gravar na pasta temporária (' . $Tmp
+                . '). Corrija a permissão ou o espaço dessa pasta no servidor.',
+                'corpo da requisição descartado pelo PHP; pasta temporária ' . $Tmp . (is_writable($Tmp) ? ' gravável' : ' sem permissão de escrita')
+                . ', livre: ' . (int) (@disk_free_space($Tmp) / 1048576) . ' MB');
+        }
         if ($Chunk === '' || strlen($Chunk) > ENVIO_PARTE)
             Json(400, ['ok' => false, 'recebido' => $Received, 'erro' => 'Parte vazia ou grande demais.']);
         if ($Received + strlen($Chunk) > ARQUIVO_MAX + 16) {

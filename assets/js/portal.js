@@ -463,7 +463,7 @@
                 pos = data.recebido;
                 falhas = 0;
                 aoAvancar(pos / cifrado.byteLength);
-            } else if (++falhas >= 4 || (resp && resp.status !== 409 && resp.status < 500 && !resp.ok)) {
+            } else if (++falhas >= 4 || data.erro && resp.status !== 409) {
                 throw new Error(data.erro || 'O envio foi interrompido. Verifique a conexão e tente de novo.');
             }
         }
