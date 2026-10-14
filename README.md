@@ -22,6 +22,7 @@ framework: o `contato.php`, que envia o formulário por e-mail, e a área do cli
 | `app/boasvindas.php` | E-mail de boas-vindas enviado ao criar um cliente |
 | `assets/js/portal.js` | Criptografia no navegador: senha, chaves, envio e download |
 | `bin/criar-admin.php` | Cria um administrador pela linha de comando |
+| `arquivos/` | Arquivos cifrados dos clientes, uma pasta por cliente (`arquivos/<id>/`). Bloqueada para a web e fora do Git |
 
 ## Publicação
 
@@ -72,8 +73,19 @@ clientes, respondem mensagens, mudam a situação de créditos e operações e e
 ### Instalação
 
 1. O PHP precisa da extensão SQLite: `apt install php8.3-sqlite3` (e reiniciar o Apache ou o PHP-FPM).
-2. O banco `portal.sqlite` e a pasta `arquivos/` são criados sozinhos dentro da pasta de dados
-   (`config/dados` ou `pasta_dados`), a mesma do formulário de contato e com as mesmas exigências.
+2. O banco `portal.sqlite` é criado sozinho dentro da pasta de dados (`config/dados` ou `pasta_dados`),
+   a mesma do formulário de contato e com as mesmas exigências.
+   Os arquivos cifrados ficam em `arquivos/`, na raiz do projeto (ou em `pasta_arquivos`, em
+   `config/config.php`), numa pasta por cliente cujo nome é o id dele: `arquivos/12/` guarda os
+   arquivos do cliente 12. O id aparece no endereço da ficha do cliente (`cliente.php?id=12`).
+   A pasta precisa aceitar gravação pelo usuário do PHP:
+
+   ```
+   chown -R www-data: arquivos && chmod 700 arquivos
+   ```
+
+   Em Docker, monte `arquivos/` como volume com essa permissão, para os arquivos sobreviverem à
+   recriação do contêiner.
 3. O site precisa estar em HTTPS: fora dele o navegador não oferece as funções de criptografia.
 4. Envio de arquivos de até 50 MB: o arquivo cifrado sobe em partes de 512 KB, então os limites
    padrão do PHP (`upload_max_filesize`, `post_max_size`) e de proxies não precisam ser alterados.
@@ -121,7 +133,7 @@ reenvia a mensagem enquanto ele não tiver feito o primeiro acesso.
   servidor pode trocar esse código e capturar senhas dali em diante; arquivos já guardados continuam
   ilegíveis sem a senha. A impressão digital da chave, em "Minha conta" e na tela do cliente, permite
   conferir por telefone que a chave pública não foi trocada.
-- **Backup.** Copie a pasta de dados inteira: `portal.sqlite` e `arquivos/` só servem juntos.
+- **Backup.** Copie juntos a pasta de dados (`portal.sqlite`) e a pasta `arquivos/`: um não serve sem o outro.
 
 ### Teste local
 

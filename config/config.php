@@ -38,6 +38,11 @@ return [
     // o formulário recusa os envios e registra o motivo no log de erros.
     'pasta_dados' => '',
 
+    // Pasta dos arquivos cifrados dos clientes. Vazio usa arquivos/ na raiz do projeto.
+    // Dentro dela o site cria uma pasta por cliente, com o id dele como nome. Ela precisa aceitar
+    // gravação pelo usuário do PHP e é bloqueada para a web (.htaccess da raiz e da própria pasta).
+    'pasta_arquivos' => '',
+
     // Proxies da própria infraestrutura na frente do site (proxy reverso, rede do Docker).
     // Quando a conexão chega de uma destas redes, o site lê X-Forwarded-For de trás para a frente
     // para achar o visitante e aceita X-Forwarded-Proto para marcar o cookie de sessão como seguro.

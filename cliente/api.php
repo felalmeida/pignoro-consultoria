@@ -151,12 +151,12 @@ switch ($Acao) {
     case 'enviar_inicio':
         RequireRole('admin');
         $Client = ClientOr404((int) Post('cliente'));
-        foreach (glob(FilesDir() . '/envio-*.part') ?: [] as $Old) {
+        foreach (glob(FilesRoot() . '/*/envio-*.part') ?: [] as $Old) {
             if (filemtime($Old) < time() - 86400)
                 @unlink($Old); // envios abandonados
         }
         $Envio = bin2hex(random_bytes(16));
-        $Path = FilesDir() . '/envio-' . $Envio . '.part';
+        $Path = ClientFilesDir((int) $Client['id']) . '/envio-' . $Envio . '.part';
         if (file_put_contents($Path, '') === false)
             Abort(500, 'Não foi possível guardar o arquivo.', 'falha ao criar ' . $Path);
         @chmod($Path, 0600);
@@ -170,7 +170,7 @@ switch ($Acao) {
         $Envio = is_string($_GET['envio'] ?? null) ? $_GET['envio'] : '';
         if (preg_match('/^[0-9a-f]{32}$/', $Envio) !== 1 || !isset($_SESSION['envios'][$Envio]))
             Json(404, ['ok' => false, 'erro' => 'Envio não encontrado. Recarregue a página e tente de novo.']);
-        $Path = FilesDir() . '/envio-' . $Envio . '.part';
+        $Path = ClientFilesDir((int) $_SESSION['envios'][$Envio]) . '/envio-' . $Envio . '.part';
         $Handle = @fopen($Path, 'ab');
         if ($Handle === false || !flock($Handle, LOCK_EX))
             Abort(500, 'Não foi possível guardar o arquivo.', 'falha ao abrir ' . $Path);
@@ -210,7 +210,8 @@ switch ($Acao) {
         $Envio = Post('envio');
         if (preg_match('/^[0-9a-f]{32}$/', $Envio) !== 1 || ($_SESSION['envios'][$Envio] ?? 0) !== (int) $Client['id'])
             Json(404, ['ok' => false, 'erro' => 'Envio não encontrado. Recarregue a página e tente de novo.']);
-        $Part = FilesDir() . '/envio-' . $Envio . '.part';
+        $Dir = ClientFilesDir((int) $Client['id']);
+        $Part = $Dir . '/envio-' . $Envio . '.part';
         clearstatcache(true, $Part);
         $Size = is_file($Part) ? (int) filesize($Part) : 0;
         if ($Size !== (int) Post('tamanho') || $Size < 17 || $Size > ARQUIVO_MAX + 16)
@@ -230,7 +231,7 @@ switch ($Acao) {
         }
 
         $Stored = bin2hex(random_bytes(16)) . '.bin';
-        if (!rename($Part, FilesDir() . '/' . $Stored))
+        if (!rename($Part, $Dir . '/' . $Stored))
             Abort(500, 'Não foi possível guardar o arquivo.', 'falha ao renomear ' . $Part);
         unset($_SESSION['envios'][$Envio]);
 
@@ -265,8 +266,8 @@ switch ($Acao) {
         $File = Row('SELECT * FROM arquivos WHERE id = ?', [(int) ($_GET['id'] ?? 0)]);
         if ($File === null || ($User['papel'] !== 'admin' && (int) $File['cliente_id'] !== (int) $User['id']))
             Json(404, ['ok' => false, 'erro' => 'Arquivo não encontrado.']);
-        $Path = FilesDir() . '/' . basename($File['armazenado']);
-        if (!is_file($Path))
+        $Path = StoredFilePath($File);
+        if ($Path === '')
             Abort(404, 'Arquivo não encontrado.', 'arquivo ' . $File['id'] . ' está no banco mas não no disco');
         header('Content-Type: application/octet-stream');
         header('Content-Length: ' . filesize($Path));
@@ -276,8 +277,10 @@ switch ($Acao) {
     case 'excluir_arquivo':
         RequireRole('admin');
         $File = Row('SELECT * FROM arquivos WHERE id = ?', [(int) Post('id')]) ?? Json(404, ['ok' => false, 'erro' => 'Arquivo não encontrado.']);
+        $Path = StoredFilePath($File);
         Query('DELETE FROM arquivos WHERE id = ?', [$File['id']]);
-        @unlink(FilesDir() . '/' . basename($File['armazenado']));
+        if ($Path !== '')
+            @unlink($Path);
         Json(200, ['ok' => true]);
 
     // Depois que o cliente redefine a senha, o administrador cifra a chave do arquivo para a chave nova dele.

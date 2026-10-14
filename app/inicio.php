@@ -82,13 +82,46 @@ function DataDir(): string
     return $Checked = $Dir;
 }
 
-/** Pasta dos arquivos cifrados, dentro da pasta de dados. */
-function FilesDir(): string
+/**
+ * Raiz dos arquivos cifrados: arquivos/ na raiz do projeto, ou 'pasta_arquivos' em config.php.
+ * Dentro dela há uma pasta por cliente, com o id dele como nome.
+ */
+function FilesRoot(): string
 {
-    $Dir = DataDir() . '/arquivos';
-    if (!is_dir($Dir) && !@mkdir($Dir, 0700) && !is_dir($Dir))
-        Abort(503, 'Área do cliente indisponível no momento.', 'pasta de arquivos não pôde ser criada: ' . $Dir);
+    global $Config;
+    $Dir = rtrim((string) ($Config['pasta_arquivos'] ?? ''), '/');
+    if ($Dir === '')
+        $Dir = dirname(__DIR__) . '/arquivos';
+    if ((!is_dir($Dir) && !@mkdir($Dir, 0700, true) && !is_dir($Dir)) || !is_writable($Dir))
+        Abort(503, 'Área de arquivos indisponível no momento.', 'pasta de arquivos inexistente ou sem permissão de escrita: ' . $Dir);
     return $Dir;
+}
+
+/** Pasta de arquivos de um cliente, criada no primeiro envio. */
+function ClientFilesDir(int $v_ClientId): string
+{
+    $Dir = FilesRoot() . '/' . $v_ClientId;
+    if (!is_dir($Dir) && !@mkdir($Dir, 0700) && !is_dir($Dir))
+        Abort(503, 'Área de arquivos indisponível no momento.', 'pasta do cliente não pôde ser criada: ' . $Dir);
+    return $Dir;
+}
+
+/**
+ * Caminho de um arquivo guardado (linha da tabela arquivos), ou vazio se ele não está no disco.
+ * Arquivos enviados antes da separação por cliente ficavam todos em config/dados/arquivos;
+ * ao serem encontrados lá, são movidos para a pasta do cliente.
+ */
+function StoredFilePath(array $v_File): string
+{
+    $Name = basename((string) $v_File['armazenado']);
+    $Path = FilesRoot() . '/' . (int) $v_File['cliente_id'] . '/' . $Name;
+    if (is_file($Path))
+        return $Path;
+    $Old = DataDir() . '/arquivos/' . $Name;
+    if (!is_file($Old))
+        return '';
+    ClientFilesDir((int) $v_File['cliente_id']);
+    return @rename($Old, $Path) ? $Path : $Old;
 }
 
 /** Segredo do servidor, usado para responder de forma uniforme a e-mails não cadastrados. */

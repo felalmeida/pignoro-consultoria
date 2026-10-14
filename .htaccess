@@ -6,6 +6,8 @@ DirectoryIndex index.html
     Require all denied
 </FilesMatch>
 RedirectMatch 404 ^/\.git
+# Arquivos cifrados dos clientes: só o PHP lê. Vale mesmo se a pasta for um volume montado sem o .htaccess dela.
+RedirectMatch 404 (^|/)arquivos/
 
 <IfModule mod_headers.c>
     Header always set X-Frame-Options "DENY"

@@ -1,0 +1,4 @@
+# Arquivos cifrados dos clientes: uma pasta por cliente, com o id dele como nome. Nada disso vai para o Git.
+*
+!.gitignore
+!.htaccess
