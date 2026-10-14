@@ -1,10 +1,9 @@
 # Pignoro Consultoria
 
-Site institucional da Pignoro Consultoria. O domínio `pignoroconsultoria.com.br` usado nos arquivos é provisório:
-confirme-o em `index.html`, `robots.txt`, `sitemap.xml` e `config/config.php` antes de publicar.
+Site institucional publicado em https://pignoro.felipealmeidaconsultoria.com.br/.
 
-Página única em HTML, CSS e JavaScript, sem etapa de build. O único código de servidor é o
-`contato.php`, que envia o formulário por e-mail.
+Página única em HTML, CSS e JavaScript, sem etapa de build. O código de servidor é PHP sem
+framework: o `contato.php`, que envia o formulário por e-mail, e a área do cliente em `cliente/`.
 
 ## Estrutura
 
@@ -17,6 +16,11 @@ Página única em HTML, CSS e JavaScript, sem etapa de build. O único código d
 | `contato.php` | Recebe o formulário e envia o e-mail |
 | `config/config.php` | Destino e remetente do e-mail, limites contra spam |
 | `.htaccess` | Cabeçalhos de segurança, cache e bloqueios |
+| `cliente/` | Área do cliente e, em `cliente/admin/`, a administração |
+| `cliente/api.php` | Chamadas do JavaScript: login, chaves e arquivos cifrados |
+| `app/` | Código comum da área do cliente (banco, sessão, layout). Bloqueada para a web |
+| `assets/js/portal.js` | Criptografia no navegador: senha, chaves, envio e download |
+| `bin/criar-admin.php` | Cria um administrador pela linha de comando |
 
 ## Publicação
 
@@ -57,3 +61,62 @@ passam a abrir esse link.
 O Cloudflare guarda CSS e JavaScript por algumas horas. Ao alterar `site.css`, `site.js` ou
 `config.js`, aumente o número em `?v=` nas três referências do `index.html`, para os visitantes
 receberem a versão nova na hora.
+
+## Área do cliente
+
+Fica em `/cliente/`. Clientes trocam mensagens com a Pignoro, mantêm o cadastro (empresa ou fundo,
+pessoas de contato, créditos para cobrança e operações) e baixam arquivos. Administradores criam os
+clientes, respondem mensagens, mudam a situação de créditos e operações e enviam arquivos.
+
+### Instalação
+
+1. O PHP precisa da extensão SQLite: `apt install php8.3-sqlite3` (e reiniciar o Apache ou o PHP-FPM).
+2. O banco `portal.sqlite` e a pasta `arquivos/` são criados sozinhos dentro da pasta de dados
+   (`config/dados` ou `pasta_dados`), a mesma do formulário de contato e com as mesmas exigências.
+3. O site precisa estar em HTTPS: fora dele o navegador não oferece as funções de criptografia.
+4. Envio de arquivos de até 50 MB: `cliente/.htaccess` (mod_php) e `cliente/.user.ini` (PHP-FPM) já
+   elevam `upload_max_filesize` e `post_max_size`. Se o servidor web tiver limite próprio menor, ajuste-o.
+5. Crie o primeiro administrador, com o mesmo usuário do servidor web:
+
+   ```
+   sudo -u www-data php bin/criar-admin.php "Nome" email@dominio https://endereco-do-site/
+   ```
+
+   O comando mostra um link para a pessoa definir a senha. Rodar de novo com o mesmo e-mail gera
+   um link de redefinição.
+
+### Como a proteção funciona
+
+- **Senha.** O navegador deriva da senha (PBKDF2-SHA-256, 600 mil iterações) dois valores: um de
+  autenticação, que o servidor guarda com `password_hash`, e uma chave que nunca sai do navegador.
+  O servidor não recebe a senha.
+- **Chaves.** No primeiro acesso o navegador gera um par RSA-OAEP de 3072 bits. A chave privada é
+  cifrada com a chave derivada da senha antes de ir para o servidor.
+- **Arquivos.** O administrador cifra cada arquivo no navegador com uma chave AES-256-GCM própria.
+  Essa chave é cifrada com a chave pública do cliente e dos administradores. O servidor guarda
+  conteúdo, nome e tipo do arquivo já cifrados e não tem como abri-los.
+- **Download.** A função `baixarArquivoDecifrado`, em `assets/js/portal.js`, baixa o arquivo cifrado,
+  decifra no navegador e entrega o arquivo aberto.
+- **Mensagens e cadastros** ficam no SQLite sem criptografia de ponta a ponta.
+
+### O que isso implica
+
+- **Senha esquecida não se recupera.** O administrador gera um link de redefinição na tela do cliente.
+  Quando o cliente cria a nova senha, ganha chaves novas, e os arquivos antigos ficam bloqueados até o
+  administrador abrir a aba Arquivos do cliente e clicar em "Liberar para o cliente".
+- **Administrador que esquece a senha** perde o acesso aos arquivos enviados antes. Os clientes
+  continuam abrindo os deles. Vale ter mais de um administrador.
+- **Limite da proteção.** O JavaScript que cifra é servido pelo próprio site. Quem controlar o
+  servidor pode trocar esse código e capturar senhas dali em diante; arquivos já guardados continuam
+  ilegíveis sem a senha. A impressão digital da chave, em "Minha conta" e na tela do cliente, permite
+  conferir por telefone que a chave pública não foi trocada.
+- **Backup.** Copie a pasta de dados inteira: `portal.sqlite` e `arquivos/` só servem juntos.
+
+### Teste local
+
+```
+php -d upload_max_filesize=64M -d post_max_size=70M -S 127.0.0.1:8765
+php bin/criar-admin.php "Nome" email@dominio http://127.0.0.1:8765/
+```
+
+Em `127.0.0.1` e `localhost` o navegador aceita a criptografia mesmo sem HTTPS.

@@ -2,7 +2,7 @@
 Options -Indexes
 DirectoryIndex index.html
 
-<FilesMatch "\.(md|bkp|old|log|sql|zip|tgz|swp|save|key)$|~$">
+<FilesMatch "\.(md|bkp|old|log|sql|sqlite|ini|zip|tgz|swp|save|key)$|~$">
     Require all denied
 </FilesMatch>
 RedirectMatch 404 ^/\.git

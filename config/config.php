@@ -8,7 +8,7 @@ return [
     'destino' => 'contato@pignoroconsultoria.com.br',
 
     // Remetente técnico. Use um endereço do próprio domínio para não cair em spam.
-    'remetente' => 'site@pignoroconsultoria.com.br',
+    'remetente' => 'site@pignoro.felipealmeidaconsultoria.com.br',
 
     'nome_site' => 'Pignoro Consultoria',
 

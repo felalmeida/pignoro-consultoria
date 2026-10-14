@@ -1,0 +1,585 @@
+/* Pignoro Consultoria - área do cliente. Usa as cores e as fontes de site.css. */
+
+body.portal {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--paper-tint);
+    font-size: 16px;
+}
+
+.portal-header {
+    background: var(--ink-900);
+    color: var(--on-dark);
+}
+
+.portal-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 64px;
+}
+
+.portal-user {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 14px;
+    color: var(--on-dark-soft);
+}
+
+.portal-nav {
+    border-top: 1px solid var(--line-dark);
+    background: var(--ink-800);
+}
+
+.portal-nav .container {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+}
+
+.portal-nav a {
+    padding: 12px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    text-decoration: none;
+    color: var(--on-dark-soft);
+    border-bottom: 2px solid transparent;
+}
+
+.portal-nav a:hover {
+    color: var(--on-dark);
+}
+
+.portal-nav a[aria-current="page"] {
+    color: var(--cyan);
+    border-bottom-color: var(--cyan);
+}
+
+.portal-main {
+    flex: 1;
+    padding: 40px 0 64px;
+}
+
+.portal-main h1 {
+    font-size: clamp(26px, 3vw, 34px);
+    font-weight: 600;
+}
+
+.portal-main h2 {
+    margin: 40px 0 16px;
+    font-size: 21px;
+    font-weight: 600;
+}
+
+.portal-main a {
+    color: var(--ink-600);
+}
+
+.page-intro {
+    margin: 8px 0 28px;
+    max-width: 70ch;
+    color: var(--text-soft);
+}
+
+.hint {
+    margin-top: 12px;
+    max-width: 70ch;
+    font-size: 14px;
+    color: var(--text-soft);
+}
+
+.crumb {
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.empty {
+    padding: 24px 0;
+    color: var(--text-soft);
+}
+
+.portal-footer {
+    padding: 20px 0;
+    font-size: 13px;
+    color: var(--text-soft);
+    border-top: 1px solid var(--line);
+}
+
+/* avisos */
+
+.notice {
+    margin: 0 0 24px;
+    padding: 14px 18px;
+    border: 1px solid var(--line);
+    border-left-width: 4px;
+    border-radius: var(--radius-sm);
+    background: var(--paper);
+}
+
+.notice p + p {
+    margin-top: 8px;
+}
+
+.notice .pbtn {
+    margin-top: 12px;
+}
+
+.notice-ok {
+    border-left-color: #2e8b63;
+}
+
+.notice-erro {
+    border-left-color: #c0392b;
+}
+
+.notice-aviso {
+    border-left-color: var(--teal);
+}
+
+.link-box {
+    display: block;
+    padding: 10px 12px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    word-break: break-all;
+    user-select: all;
+    background: var(--paper-tint);
+    border-radius: var(--radius-sm);
+}
+
+/* caixas, formulários e botões */
+
+.card-box {
+    padding: 24px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+
+.pform {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 20px;
+}
+
+.pform[hidden] {
+    display: none;
+}
+
+.pfield {
+    display: block;
+}
+
+.pfield-wide,
+.pform-foot,
+.pform .form-msg {
+    grid-column: 1 / -1;
+}
+
+.pfield > span {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-soft);
+}
+
+.pfield input,
+.pfield select,
+.pfield textarea,
+.inline-form select {
+    width: 100%;
+    padding: 10px 12px;
+    font: inherit;
+    color: var(--text);
+    background: var(--paper);
+    border: 1px solid #c9c4b6;
+    border-radius: var(--radius-sm);
+}
+
+.pfield textarea {
+    resize: vertical;
+}
+
+.pfield input:focus,
+.pfield select:focus,
+.pfield textarea:focus {
+    outline: 2px solid var(--cyan);
+    outline-offset: 1px;
+    border-color: var(--teal);
+}
+
+.pform-foot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.form-msg {
+    font-size: 15px;
+    color: var(--text-soft);
+}
+
+.form-msg:empty {
+    display: none;
+}
+
+.form-msg.is-ok {
+    color: #1f6b4a;
+}
+
+.form-msg.is-error {
+    color: #a93226;
+}
+
+.pbtn {
+    display: inline-block;
+    padding: 7px 14px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    text-decoration: none;
+    color: var(--ink-700);
+    background: var(--paper);
+    border: 1px solid #c9c4b6;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.portal-main a.pbtn {
+    color: var(--ink-700);
+}
+
+.pbtn:hover {
+    border-color: var(--ink-600);
+}
+
+.pbtn[disabled] {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.pbtn-danger {
+    color: #a93226;
+}
+
+.pbtn-danger:hover {
+    border-color: #a93226;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+/* entrada e primeiro acesso */
+
+.auth-card {
+    max-width: 440px;
+    margin: 24px auto 0;
+    padding: 32px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.auth-intro {
+    margin: 8px 0 24px;
+    color: var(--text-soft);
+}
+
+.auth-help {
+    margin-top: 20px;
+    font-size: 14px;
+    color: var(--text-soft);
+}
+
+/* início */
+
+.tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 28px;
+}
+
+.portal-main a.tile {
+    display: block;
+    padding: 20px;
+    text-decoration: none;
+    color: var(--text);
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+
+.tile:hover {
+    border-color: var(--teal);
+}
+
+.tile-label {
+    display: block;
+    font-size: 14px;
+    color: var(--text-soft);
+}
+
+.tile strong {
+    display: block;
+    margin-top: 8px;
+    font-family: var(--font-head);
+    font-size: 34px;
+    line-height: 1.1;
+}
+
+.tile-unit {
+    font-size: 13px;
+    color: var(--text-soft);
+}
+
+/* tabelas e fichas */
+
+.table-wrap {
+    overflow-x: auto;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+}
+
+.table th,
+.table td {
+    padding: 12px 16px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--line);
+}
+
+.table th {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-soft);
+    white-space: nowrap;
+}
+
+.table tr:last-child td {
+    border-bottom: 0;
+}
+
+.table small {
+    color: var(--text-soft);
+}
+
+.table-actions {
+    white-space: nowrap;
+    text-align: right;
+}
+
+.table-actions form,
+.inline-form {
+    display: inline-flex;
+    gap: 6px;
+    margin-left: 6px;
+}
+
+.inline-form select {
+    width: auto;
+    padding: 6px 8px;
+    font-size: 14px;
+}
+
+.tag {
+    display: inline-block;
+    padding: 2px 10px;
+    font-size: 13px;
+    white-space: nowrap;
+    color: var(--ink-700);
+    background: var(--paper-tint);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+}
+
+.tag-alert {
+    color: #7a5a12;
+    background: var(--cyan-soft);
+    border-color: #e3cf96;
+}
+
+.facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px 24px;
+    margin: 0;
+}
+
+.facts dt {
+    font-size: 13px;
+    color: var(--text-soft);
+}
+
+.facts dd {
+    margin: 2px 0 0;
+    word-break: break-word;
+}
+
+.facts code {
+    font-family: var(--font-mono);
+    font-size: 13px;
+}
+
+.tabs {
+    display: flex;
+    gap: 4px;
+    margin: 20px 0 28px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--line);
+}
+
+.portal-main .tabs a {
+    padding: 10px 14px;
+    font-size: 15px;
+    white-space: nowrap;
+    text-decoration: none;
+    color: var(--text-soft);
+    border-bottom: 2px solid transparent;
+}
+
+.portal-main .tabs a[aria-current="page"] {
+    color: var(--text);
+    font-weight: 600;
+    border-bottom-color: var(--teal);
+}
+
+/* mensagens */
+
+.thread {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.msg {
+    max-width: min(640px, 88%);
+    padding: 14px 18px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+
+.msg-mine {
+    align-self: flex-end;
+    background: #fbf6e6;
+    border-color: #ecdfb9;
+}
+
+.msg header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: var(--text-soft);
+}
+
+.msg p {
+    word-break: break-word;
+}
+
+/* arquivos */
+
+.files {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+
+.file {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+}
+
+.file:last-child {
+    border-bottom: 0;
+}
+
+.file-info strong {
+    display: block;
+    word-break: break-word;
+}
+
+.file-info span,
+.file-status {
+    font-size: 13px;
+    color: var(--text-soft);
+}
+
+.file-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+#form-enviar,
+#form-destravar {
+    margin-bottom: 24px;
+}
+
+@media (max-width: 640px) {
+    .pform {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-card,
+    .card-box {
+        padding: 20px;
+    }
+
+    .portal-user span {
+        display: none;
+    }
+
+    .table thead {
+        display: none;
+    }
+
+    .table tr {
+        display: block;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .table td {
+        display: block;
+        padding: 4px 16px;
+        border: 0;
+    }
+
+    .table td[data-label]:not(:empty)::before {
+        content: attr(data-label) ": ";
+        font-size: 13px;
+        color: var(--text-soft);
+    }
+
+    .table-actions {
+        text-align: left;
+    }
+}
