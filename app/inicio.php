@@ -707,7 +707,7 @@ function PageHead(string $v_Title, string $v_Active = ''): void
         . '<title>' . E($v_Title) . ' | Pignoro</title>'
         . '<link rel="icon" href="' . $Root . 'assets/img/icone-32.png" sizes="32x32" type="image/png">'
         . '<link rel="apple-touch-icon" href="' . $Root . 'assets/img/icone-180.png">'
-        . '<link rel="stylesheet" href="' . $Root . 'assets/css/site.css?v=4">'
+        . '<link rel="stylesheet" href="' . $Root . 'assets/css/site.css?v=5">'
         . '<link rel="stylesheet" href="' . $Root . 'assets/css/portal.css?v=4">'
         . '<script defer src="' . $Root . 'assets/js/portal.js?v=4"></script>'
         . '</head><body class="portal" data-api="' . $Root . 'cliente/api.php"'

@@ -35,20 +35,53 @@
     if (!textos[idioma]) idioma = 'pt';
     function t(pt) { return (textos[idioma] && textos[idioma][pt]) || pt; }
 
-    // --- Google Analytics 4 (opcional) ---
-    if (cfg.analyticsId) {
-        var ga = doc.createElement('script');
-        ga.async = true;
-        ga.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(cfg.analyticsId);
-        doc.head.appendChild(ga);
-        window.dataLayer = window.dataLayer || [];
+    // --- medição (opcional, ver config.js) ---
+    var googleId = String(cfg.analyticsId || '').trim();
+    var usaGa4 = /^G-[A-Z0-9]+$/.test(googleId);
+    var usaGtm = /^GTM-[A-Z0-9]+$/.test(googleId);
+
+    function carregar(src) {
+        var s = doc.createElement('script');
+        s.async = true;
+        s.src = src;
+        doc.head.appendChild(s);
+    }
+
+    window.dataLayer = window.dataLayer || [];
+    if (usaGa4) {
+        carregar('https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(googleId));
         window.gtag = function () { window.dataLayer.push(arguments); };
         window.gtag('js', new Date());
-        window.gtag('config', cfg.analyticsId);
+        window.gtag('config', googleId);
+    } else if (usaGtm) {
+        window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
+        carregar('https://www.googletagmanager.com/gtm.js?id=' + encodeURIComponent(googleId));
+    }
+
+    // PostHog: fila de chamadas até a biblioteca carregar, como no trecho oficial de instalação
+    var posthogKey = String(cfg.posthogKey || '').trim();
+    if (/^phc_[A-Za-z0-9]+$/.test(posthogKey)) {
+        var regiao = cfg.posthogRegiao === 'eu' ? 'eu' : 'us';
+        var ph = window.posthog = window.posthog || [];
+        ph._i = ph._i || [];
+        ['capture', 'identify', 'register', 'reset', 'opt_in_capturing', 'opt_out_capturing', 'set_config'].forEach(function (m) {
+            ph[m] = ph[m] || function () { ph.push([m].concat(Array.prototype.slice.call(arguments))); };
+        });
+        ph.init = function (k, o, n) { ph._i.push([k, o, n]); };
+        ph.__SV = 1;
+        ph.init(posthogKey, { api_host: 'https://' + regiao + '.i.posthog.com', person_profiles: 'identified_only' });
+        var phScript = doc.createElement('script');
+        phScript.async = true;
+        phScript.crossOrigin = 'anonymous';
+        phScript.src = 'https://' + regiao + '-assets.i.posthog.com/static/array.js';
+        doc.head.appendChild(phScript);
     }
 
     function track(name, params) {
-        if (typeof window.gtag === 'function') window.gtag('event', name, params || {});
+        params = params || {};
+        if (usaGa4 && typeof window.gtag === 'function') window.gtag('event', name, params);
+        if (usaGtm) window.dataLayer.push(Object.assign({ event: name }, params));
+        if (window.posthog && typeof window.posthog.capture === 'function') window.posthog.capture(name, params);
     }
 
     // --- ano do rodapé ---

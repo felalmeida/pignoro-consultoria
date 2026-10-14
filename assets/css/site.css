@@ -1903,6 +1903,28 @@ svg {
     color: var(--text-soft);
 }
 
+.legal a {
+    color: var(--ink-600);
+}
+
+.legal .legal-updated {
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+.legal-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+    padding-left: 20px;
+    list-style: disc;
+    color: var(--text-soft);
+}
+
+.legal-list strong {
+    color: var(--text);
+}
+
 /* fora da página principal o cabeçalho fica sobre fundo claro: usa a cor sólida */
 .page-legal .site-header {
     background: var(--ink-900);

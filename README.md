@@ -14,7 +14,7 @@ framework: o `contato.php`, que envia o formulário por e-mail, e a área do cli
 | `app/ajuda/` | Manual da área do cliente, um arquivo por idioma |
 | `termos/index.html` | Termos de Uso e Política de Privacidade (em português), copiados do site anterior |
 | `assets/css/site.css` | Visual (cores no bloco `:root`) |
-| `assets/js/config.js` | Link de agenda e Google Analytics |
+| `assets/js/config.js` | Link de agenda e IDs de medição (Google e PostHog) |
 | `assets/js/site.js` | Menu, formulário e animações |
 | `contato.php` | Recebe o formulário e envia o e-mail |
 | `config/config.php` | Destino e remetente do e-mail, limites contra spam |
@@ -54,6 +54,26 @@ php -S 127.0.0.1:8765
 ```
 
 O envio do formulário falha localmente se a máquina não tiver servidor de e-mail; o restante funciona.
+
+## Medição (Google e PostHog)
+
+Os IDs ficam em `assets/js/config.js`. Com o campo vazio, a ferramenta fica desligada.
+
+- `analyticsId`: ID de rastreio do Google. Aceita o do Google Analytics 4 (`G-XXXXXXXXXX`) ou o do
+  Google Tag Manager (`GTM-XXXXXXX`); o site reconhece qual é pelo começo do ID.
+- `posthogKey` e `posthogRegiao`: chave do projeto no PostHog (começa com `phc_`) e a região em que a
+  conta foi criada, `us` ou `eu`.
+
+Esses IDs são públicos por natureza (qualquer visitante os vê no navegador), então podem ir para o
+repositório. Depois de alterar, aumente o número em `config.js?v=` em `index.html`, `en/index.html`,
+`es/index.html` e `termos/index.html`.
+
+A medição só roda nas páginas públicas. A área do cliente não carrega `config.js` nem código de
+terceiros, porque um script externo ali poderia ler senhas e documentos antes da criptografia.
+
+O `.htaccess` já libera os domínios do Google Analytics, do Tag Manager e do PostHog na política de
+segurança (CSP). Se o Tag Manager for usado para incluir outras ferramentas, os domínios delas
+também precisarão ser liberados ali, senão o navegador as bloqueia.
 
 ## Agenda online
 
