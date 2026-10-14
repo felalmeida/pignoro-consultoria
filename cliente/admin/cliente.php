@@ -4,6 +4,7 @@ declare(strict_types=1);
 require __DIR__ . '/../../app/inicio.php';
 require __DIR__ . '/../../app/registros.php';
 require __DIR__ . '/../../app/mensagens.php';
+require __DIR__ . '/../../app/boasvindas.php';
 
 $Admin = RequireRole('admin');
 $Client = ClientOr404((int) ($_GET['id'] ?? 0));
@@ -29,8 +30,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             }
             break;
         case 'link':
-            $_SESSION['link'] = [$Id, NewActivation($Id)];
-            Flash('ok', 'Novo link gerado. Envie ao cliente.');
+            $Link = NewActivation($Id);
+            $_SESSION['link'] = [$Id, $Link];
+            // quem ainda não fez o primeiro acesso recebe as boas-vindas de novo, com o link novo
+            if ($Client['senha_hash'] !== null)
+                Flash('ok', 'Link de redefinição gerado. Envie ao cliente.');
+            elseif (SendWelcome($Config, $Client, $Link))
+                Flash('ok', 'Novo link gerado e e-mail de boas-vindas reenviado para ' . $Client['email'] . '.');
+            else
+                Flash('erro', 'Novo link gerado, mas o e-mail de boas-vindas não pôde ser enviado. Envie ao cliente o link abaixo.');
             break;
         case 'ativo':
             Query('UPDATE usuarios SET ativo = 1 - ativo WHERE id = ?', [$Id]);
@@ -50,7 +58,7 @@ if ($Aba === 'resumo') {
     $Link = $_SESSION['link'] ?? null;
     unset($_SESSION['link']);
     if (is_array($Link) && $Link[0] === $Id)
-        echo '<div class="notice notice-aviso"><p>Link de acesso, válido por 7 dias. Ele é mostrado só agora; copie e envie ao cliente:</p>'
+        echo '<div class="notice notice-aviso"><p>Link de acesso, válido por 7 dias. Ele é mostrado só agora; copie se precisar enviá-lo por outro canal:</p>'
             . '<p><code class="link-box">' . E(SiteUrl() . $Link[1]) . '</code></p></div>';
 
     $Status = !$Client['ativo'] ? 'Desativado' : ($Client['senha_hash'] === null ? 'Aguardando primeiro acesso' : 'Ativo');
@@ -65,7 +73,7 @@ if ($Aba === 'resumo') {
         . '<form method="post" action="' . E(Root() . 'cliente/' . $Self) . '"' . ($Client['senha_hash'] !== null
             ? ' data-confirmar="Gerar um novo link? Quando o cliente criar a nova senha, os arquivos dele precisarão ser liberados de novo."' : '') . '>'
         . CsrfField() . '<input type="hidden" name="acao" value="link"><button class="pbtn" type="submit">'
-        . ($Client['senha_hash'] === null ? 'Gerar novo link de primeiro acesso' : 'Gerar link de redefinição de senha') . '</button></form>'
+        . ($Client['senha_hash'] === null ? 'Reenviar e-mail de boas-vindas' : 'Gerar link de redefinição de senha') . '</button></form>'
         . '<form method="post" action="' . E(Root() . 'cliente/' . $Self) . '">' . CsrfField() . '<input type="hidden" name="acao" value="ativo">'
         . '<button class="pbtn' . ($Client['ativo'] ? ' pbtn-danger' : '') . '" type="submit">' . ($Client['ativo'] ? 'Desativar acesso' : 'Reativar acesso') . '</button></form></div>';
 

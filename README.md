@@ -18,7 +18,8 @@ framework: o `contato.php`, que envia o formulário por e-mail, e a área do cli
 | `.htaccess` | Cabeçalhos de segurança, cache e bloqueios |
 | `cliente/` | Área do cliente e, em `cliente/admin/`, a administração |
 | `cliente/api.php` | Chamadas do JavaScript: login, chaves e arquivos cifrados |
-| `app/` | Código comum da área do cliente (banco, sessão, layout). Bloqueada para a web |
+| `app/` | Código comum: banco, sessão, layout e envio de e-mail (`email.php`). Bloqueada para a web |
+| `app/boasvindas.php` | E-mail de boas-vindas enviado ao criar um cliente |
 | `assets/js/portal.js` | Criptografia no navegador: senha, chaves, envio e download |
 | `bin/criar-admin.php` | Cria um administrador pela linha de comando |
 
@@ -84,6 +85,14 @@ clientes, respondem mensagens, mudam a situação de créditos e operações e e
 
    O comando mostra um link para a pessoa definir a senha. Rodar de novo com o mesmo e-mail gera
    um link de redefinição.
+
+### E-mail de boas-vindas
+
+Ao criar um cliente, o site envia a ele um e-mail de boas-vindas com o link de primeiro acesso, pelo
+mesmo caminho do formulário de contato: `config/smtp.php` quando existe, senão o `mail()` do servidor.
+Se o envio falhar, o cliente é criado do mesmo jeito e o link aparece na tela para ser enviado por
+outro canal. O botão "Reenviar e-mail de boas-vindas", na ficha do cliente, gera um link novo e
+reenvia a mensagem enquanto ele não tiver feito o primeiro acesso.
 
 ### Como a proteção funciona
 

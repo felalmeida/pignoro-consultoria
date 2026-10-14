@@ -140,8 +140,8 @@
                         setMode('mensagem');
                         token = null;
                         setStatus('ok', agendar
-                            ? 'Pedido recebido. Vou confirmar o horário por e-mail ou telefone.'
-                            : 'Mensagem enviada. Respondo em até um dia útil.');
+                            ? 'Pedido recebido. Vamos confirmar o horário por e-mail ou telefone.'
+                            : 'Mensagem enviada. Respondemos em até um dia útil.');
                         track('contato_formulario', { tipo: agendar ? 'agendar' : 'mensagem' });
                     } else {
                         setStatus('error', res.body.erro || 'Não foi possível enviar agora. Tente novamente em alguns minutos.');

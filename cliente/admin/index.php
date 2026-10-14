@@ -2,6 +2,7 @@
 /** Administração: lista de clientes e cadastro de um novo. */
 declare(strict_types=1);
 require __DIR__ . '/../../app/inicio.php';
+require __DIR__ . '/../../app/boasvindas.php';
 
 $Admin = RequireRole('admin');
 
@@ -16,8 +17,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     } else {
         Query("INSERT INTO usuarios (papel, nome, email, criado_em) VALUES ('cliente', ?, ?, ?)", [$Nome, $Email, time()]);
         $Id = (int) Db()->lastInsertId();
-        $_SESSION['link'] = [$Id, NewActivation($Id)];
-        Flash('ok', 'Cliente criado. Envie a ele o link de primeiro acesso.');
+        $Link = NewActivation($Id);
+        $_SESSION['link'] = [$Id, $Link];
+        if (SendWelcome($Config, ['id' => $Id, 'nome' => $Nome, 'email' => $Email], $Link))
+            Flash('ok', 'Cliente criado. O e-mail de boas-vindas, com o link de primeiro acesso, foi enviado para ' . $Email . '.');
+        else
+            Flash('erro', 'Cliente criado, mas o e-mail de boas-vindas não pôde ser enviado. Envie a ele o link abaixo.');
         Redirect('admin/cliente.php?id=' . $Id);
     }
     Redirect('admin/index.php');
@@ -52,6 +57,6 @@ if (!$Clients) {
     <label class="pfield"><span>E-mail de acesso</span><input type="email" name="email" maxlength="150" required></label>
     <div class="pform-foot"><button class="btn btn-primary" type="submit">Criar cliente</button></div>
 </form>
-<p class="hint">O cliente recebe um link para criar a própria senha. A Pignoro não define nem conhece a senha dele.</p>
+<p class="hint">O cliente recebe um e-mail de boas-vindas com o link para criar a própria senha. A Pignoro não define nem conhece a senha dele.</p>
 <?php
 PageFoot();
