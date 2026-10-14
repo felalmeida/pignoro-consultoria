@@ -439,7 +439,38 @@
 
     // --- envio (administrador): cifra cada arquivo antes de sair do navegador ---
 
-    async function cifrarEEnviar(file, destinatarios) {
+    // Manda o arquivo cifrado em partes pequenas. O servidor responde quanto já recebeu,
+    // então uma parte repetida ou perdida no caminho só faz o envio retomar do ponto certo.
+    async function enviarEmPartes(cifrado, aoAvancar) {
+        var inicio = await call('enviar_inicio', { cliente: clienteId });
+        var pos = 0;
+        var falhas = 0;
+        while (pos < cifrado.byteLength) {
+            var resp = null;
+            var data = {};
+            try {
+                resp = await fetch(api + '?acao=enviar_parte&envio=' + inicio.envio + '&pos=' + pos, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json', 'X-CSRF': csrf, 'Content-Type': 'application/octet-stream' },
+                    body: cifrado.slice(pos, pos + inicio.parte)
+                });
+                data = await resp.json().catch(function () { return {}; });
+            } catch (e) {
+                resp = null;
+            }
+            if (resp && typeof data.recebido === 'number' && data.recebido !== pos) {
+                pos = data.recebido;
+                falhas = 0;
+                aoAvancar(pos / cifrado.byteLength);
+            } else if (++falhas >= 4 || (resp && resp.status !== 409 && resp.status < 500 && !resp.ok)) {
+                throw new Error(data.erro || 'O envio foi interrompido. Verifique a conexão e tente de novo.');
+            }
+        }
+        return inicio.envio;
+    }
+
+    async function cifrarEEnviar(file, destinatarios, aoAvancar) {
         var chave = await subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
         var iv = random(12);
         var metaIv = random(12);
@@ -454,14 +485,15 @@
             chaves[destinatarios[i].id] = toB64(await subtle.encrypt(RSA, pub, bruta));
         }
 
-        var body = new FormData();
-        body.append('cliente', clienteId);
-        body.append('iv', toB64(iv));
-        body.append('meta', toB64(meta));
-        body.append('meta_iv', toB64(metaIv));
-        body.append('chaves', JSON.stringify(chaves));
-        body.append('arquivo', new Blob([cifrado], { type: 'application/octet-stream' }), 'arquivo.bin');
-        await call('enviar', body);
+        await call('enviar', {
+            cliente: clienteId,
+            envio: await enviarEmPartes(cifrado, aoAvancar),
+            tamanho: cifrado.byteLength,
+            iv: toB64(iv),
+            meta: toB64(meta),
+            meta_iv: toB64(metaIv),
+            chaves: JSON.stringify(chaves)
+        });
     }
 
     if (formEnviar) formEnviar.addEventListener('submit', async function (ev) {
@@ -476,8 +508,11 @@
         try {
             var destinatarios = (await call('destinatarios', null, 'cliente=' + encodeURIComponent(clienteId))).destinatarios;
             for (var i = 0; i < arquivos.length; i++) {
-                setMsg(formEnviar, '', 'Cifrando e enviando ' + (i + 1) + ' de ' + arquivos.length + ': ' + arquivos[i].name);
-                await cifrarEEnviar(arquivos[i], destinatarios);
+                var rotulo = 'Cifrando e enviando ' + (i + 1) + ' de ' + arquivos.length + ': ' + arquivos[i].name;
+                setMsg(formEnviar, '', rotulo);
+                await cifrarEEnviar(arquivos[i], destinatarios, function (fracao) {
+                    setMsg(formEnviar, '', rotulo + ' (' + Math.round(fracao * 100) + '%)');
+                });
             }
             formEnviar.reset();
             setMsg(formEnviar, 'ok', arquivos.length === 1 ? 'Arquivo enviado.' : arquivos.length + ' arquivos enviados.');

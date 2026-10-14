@@ -146,14 +146,66 @@ switch ($Acao) {
             WHERE chave_publica IS NOT NULL AND ativo = 1 AND (papel = 'admin' OR id = ?)", [$Client['id']])->fetchAll();
         Json(200, ['destinatarios' => $List]);
 
+    // O arquivo cifrado chega em partes pequenas, para caber nos limites padrão de envio do PHP e
+    // de qualquer proxy no caminho: enviar_inicio abre o envio, enviar_parte acrescenta e enviar conclui.
+    case 'enviar_inicio':
+        RequireRole('admin');
+        $Client = ClientOr404((int) Post('cliente'));
+        foreach (glob(FilesDir() . '/envio-*.part') ?: [] as $Old) {
+            if (filemtime($Old) < time() - 86400)
+                @unlink($Old); // envios abandonados
+        }
+        $Envio = bin2hex(random_bytes(16));
+        $Path = FilesDir() . '/envio-' . $Envio . '.part';
+        if (file_put_contents($Path, '') === false)
+            Abort(500, 'Não foi possível guardar o arquivo.', 'falha ao criar ' . $Path);
+        @chmod($Path, 0600);
+        $_SESSION['envios'][$Envio] = (int) $Client['id'];
+        Json(200, ['ok' => true, 'envio' => $Envio, 'parte' => ENVIO_PARTE]);
+
+    // Corpo da requisição: os próximos bytes do arquivo cifrado. "pos" precisa ser o tamanho já
+    // recebido; a resposta sempre informa esse tamanho, para o navegador retomar do ponto certo.
+    case 'enviar_parte':
+        RequireRole('admin');
+        $Envio = is_string($_GET['envio'] ?? null) ? $_GET['envio'] : '';
+        if (preg_match('/^[0-9a-f]{32}$/', $Envio) !== 1 || !isset($_SESSION['envios'][$Envio]))
+            Json(404, ['ok' => false, 'erro' => 'Envio não encontrado. Recarregue a página e tente de novo.']);
+        $Path = FilesDir() . '/envio-' . $Envio . '.part';
+        $Handle = @fopen($Path, 'ab');
+        if ($Handle === false || !flock($Handle, LOCK_EX))
+            Abort(500, 'Não foi possível guardar o arquivo.', 'falha ao abrir ' . $Path);
+        clearstatcache(true, $Path);
+        $Received = (int) filesize($Path);
+        if ((int) ($_GET['pos'] ?? -1) !== $Received)
+            Json(409, ['ok' => false, 'recebido' => $Received, 'erro' => 'Parte fora de ordem.']);
+
+        $Chunk = (string) file_get_contents('php://input', false, null, 0, ENVIO_PARTE + 1);
+        if ($Chunk === '' || strlen($Chunk) > ENVIO_PARTE)
+            Json(400, ['ok' => false, 'recebido' => $Received, 'erro' => 'Parte vazia ou grande demais.']);
+        if ($Received + strlen($Chunk) > ARQUIVO_MAX + 16) {
+            fclose($Handle);
+            @unlink($Path);
+            unset($_SESSION['envios'][$Envio]);
+            Json(413, ['ok' => false, 'erro' => 'Arquivo maior que o limite aceito.']);
+        }
+        if (fwrite($Handle, $Chunk) !== strlen($Chunk)) {
+            ftruncate($Handle, $Received);
+            Abort(500, 'Não foi possível guardar o arquivo.', 'falha ao gravar em ' . $Path . ' (disco cheio?)');
+        }
+        fclose($Handle);
+        Json(200, ['ok' => true, 'recebido' => $Received + strlen($Chunk)]);
+
     case 'enviar':
         $Admin = RequireRole('admin');
-        if (empty($_FILES['arquivo']) || !is_array($_FILES['arquivo']) || $_FILES['arquivo']['error'] !== UPLOAD_ERR_OK)
-            Json(413, ['ok' => false, 'erro' => 'O arquivo não chegou ao servidor. Ele pode ser maior que o limite aceito.']);
         $Client = ClientOr404((int) Post('cliente'));
-        $Size = (int) $_FILES['arquivo']['size'];
-        if ($Size < 17 || $Size > ARQUIVO_MAX + 16)
-            Json(413, ['ok' => false, 'erro' => 'Arquivo vazio ou maior que o limite aceito.']);
+        $Envio = Post('envio');
+        if (preg_match('/^[0-9a-f]{32}$/', $Envio) !== 1 || ($_SESSION['envios'][$Envio] ?? 0) !== (int) $Client['id'])
+            Json(404, ['ok' => false, 'erro' => 'Envio não encontrado. Recarregue a página e tente de novo.']);
+        $Part = FilesDir() . '/envio-' . $Envio . '.part';
+        clearstatcache(true, $Part);
+        $Size = is_file($Part) ? (int) filesize($Part) : 0;
+        if ($Size !== (int) Post('tamanho') || $Size < 17 || $Size > ARQUIVO_MAX + 16)
+            Json(400, ['ok' => false, 'erro' => 'O arquivo chegou incompleto. Tente enviar de novo.']);
 
         $Iv = PostB64('iv', 24);
         $Meta = PostB64('meta', 2400);
@@ -169,10 +221,9 @@ switch ($Acao) {
         }
 
         $Stored = bin2hex(random_bytes(16)) . '.bin';
-        $Path = FilesDir() . '/' . $Stored;
-        if (!move_uploaded_file($_FILES['arquivo']['tmp_name'], $Path))
-            Abort(500, 'Não foi possível guardar o arquivo.', 'falha ao mover o arquivo enviado para ' . $Path);
-        @chmod($Path, 0600);
+        if (!rename($Part, FilesDir() . '/' . $Stored))
+            Abort(500, 'Não foi possível guardar o arquivo.', 'falha ao renomear ' . $Part);
+        unset($_SESSION['envios'][$Envio]);
 
         Db()->beginTransaction();
         Query('INSERT INTO arquivos (cliente_id, enviado_por, armazenado, tamanho, iv, meta, meta_iv, criado_em) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',

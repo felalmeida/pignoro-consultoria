@@ -1,8 +1,2 @@
 # Área do cliente
 DirectoryIndex index.php
-
-# Limite de envio dos arquivos cifrados (ARQUIVO_MAX em app/inicio.php é 50 MB).
-<IfModule mod_php.c>
-    php_value upload_max_filesize 64M
-    php_value post_max_size 70M
-</IfModule>

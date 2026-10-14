@@ -18,6 +18,8 @@ const SESSAO_OCIOSA = 30 * 60;
 const ATIVACAO_VALIDADE = 7 * 86400;
 // Tamanho máximo de um arquivo cifrado.
 const ARQUIVO_MAX = 50 * 1024 * 1024;
+// Tamanho de cada parte do envio. Fica abaixo de 1 MB, o menor limite comum de proxies e do PHP.
+const ENVIO_PARTE = 512 * 1024;
 
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex');
@@ -591,7 +593,7 @@ function PageHead(string $v_Title, string $v_Active = ''): void
         . '<link rel="icon" href="' . $Root . 'assets/img/logo.svg" type="image/svg+xml">'
         . '<link rel="stylesheet" href="' . $Root . 'assets/css/site.css?v=1">'
         . '<link rel="stylesheet" href="' . $Root . 'assets/css/portal.css?v=2">'
-        . '<script defer src="' . $Root . 'assets/js/portal.js?v=1"></script>'
+        . '<script defer src="' . $Root . 'assets/js/portal.js?v=2"></script>'
         . '</head><body class="portal" data-api="' . $Root . 'cliente/api.php">';
 
     echo '<header class="portal-header"><div class="container portal-header-inner">'

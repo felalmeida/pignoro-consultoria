@@ -75,8 +75,8 @@ clientes, respondem mensagens, mudam a situação de créditos e operações e e
 2. O banco `portal.sqlite` e a pasta `arquivos/` são criados sozinhos dentro da pasta de dados
    (`config/dados` ou `pasta_dados`), a mesma do formulário de contato e com as mesmas exigências.
 3. O site precisa estar em HTTPS: fora dele o navegador não oferece as funções de criptografia.
-4. Envio de arquivos de até 50 MB: `cliente/.htaccess` (mod_php) e `cliente/.user.ini` (PHP-FPM) já
-   elevam `upload_max_filesize` e `post_max_size`. Se o servidor web tiver limite próprio menor, ajuste-o.
+4. Envio de arquivos de até 50 MB: o arquivo cifrado sobe em partes de 512 KB, então os limites
+   padrão do PHP (`upload_max_filesize`, `post_max_size`) e de proxies não precisam ser alterados.
 5. Crie o primeiro administrador, com o mesmo usuário do servidor web:
 
    ```
@@ -124,7 +124,7 @@ reenvia a mensagem enquanto ele não tiver feito o primeiro acesso.
 ### Teste local
 
 ```
-php -d upload_max_filesize=64M -d post_max_size=70M -S 127.0.0.1:8765
+php -S 127.0.0.1:8765
 php bin/criar-admin.php "Nome" email@dominio http://127.0.0.1:8765/
 ```
 
