@@ -68,8 +68,11 @@ Esses IDs são públicos por natureza (qualquer visitante os vê no navegador), 
 repositório. Depois de alterar, aumente o número em `config.js?v=` em `index.html`, `en/index.html`,
 `es/index.html` e `termos/index.html`.
 
-A medição só roda nas páginas públicas. A área do cliente não carrega `config.js` nem código de
-terceiros, porque um script externo ali poderia ler senhas e documentos antes da criptografia.
+A medição só roda nas páginas públicas, e só quando a área do cliente estiver num endereço próprio
+(`areaClienteUrl` em `config.js`, por exemplo um subdomínio). Enquanto as duas dividem o mesmo
+endereço, Google e PostHog não são carregados, mesmo com os IDs preenchidos: para o navegador, um
+script de terceiros na página inicial teria os mesmos poderes da área do cliente e poderia usar a
+sessão e a chave guardada de um cliente logado para baixar e decifrar os documentos dele.
 
 O `.htaccess` já libera os domínios do Google Analytics, do Tag Manager e do PostHog na política de
 segurança (CSP). Se o Tag Manager for usado para incluir outras ferramentas, os domínios delas

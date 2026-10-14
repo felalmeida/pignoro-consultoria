@@ -11,8 +11,11 @@ window.SITE_CONFIG = {
     // PostHog: chave do projeto (começa com phc_) e região em que a conta foi criada,
     // 'us' ou 'eu'. Vazio desliga.
     posthogKey: '',
-    posthogRegiao: 'us'
+    posthogRegiao: 'us',
 
-    // A medição vale só para as páginas públicas (site e termos). A área do cliente não
-    // carrega nenhum código de terceiros, para não expor a criptografia dos arquivos.
+    // Endereço da área do cliente, quando ela estiver num subdomínio próprio
+    // (ex.: 'https://cliente.exemplo.com.br/'). Enquanto ela estiver no mesmo endereço do site,
+    // Google e PostHog NÃO são carregados, mesmo com os IDs preenchidos: um script de terceiros
+    // no mesmo endereço teria acesso à sessão e às chaves dos clientes e poderia abrir os arquivos.
+    areaClienteUrl: ''
 };

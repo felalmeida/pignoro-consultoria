@@ -36,7 +36,15 @@
     function t(pt) { return (textos[idioma] && textos[idioma][pt]) || pt; }
 
     // --- medição (opcional, ver config.js) ---
-    var googleId = String(cfg.analyticsId || '').trim();
+    // Só roda se a área do cliente estiver em outro endereço (origem): no mesmo endereço, um script
+    // de terceiros alcançaria a sessão e as chaves dos clientes.
+    var areaOrigem = location.origin;
+    try { if (cfg.areaClienteUrl) areaOrigem = new URL(cfg.areaClienteUrl, location.href).origin; } catch (e) { areaOrigem = location.origin; }
+    var medicaoPermitida = areaOrigem !== location.origin;
+    if (!medicaoPermitida && (cfg.analyticsId || cfg.posthogKey) && window.console)
+        console.warn('Medição desligada: a área do cliente está no mesmo endereço do site (ver areaClienteUrl em config.js).');
+
+    var googleId = medicaoPermitida ? String(cfg.analyticsId || '').trim() : '';
     var usaGa4 = /^G-[A-Z0-9]+$/.test(googleId);
     var usaGtm = /^GTM-[A-Z0-9]+$/.test(googleId);
 
@@ -59,7 +67,7 @@
     }
 
     // PostHog: fila de chamadas até a biblioteca carregar, como no trecho oficial de instalação
-    var posthogKey = String(cfg.posthogKey || '').trim();
+    var posthogKey = medicaoPermitida ? String(cfg.posthogKey || '').trim() : '';
     if (/^phc_[A-Za-z0-9]+$/.test(posthogKey)) {
         var regiao = cfg.posthogRegiao === 'eu' ? 'eu' : 'us';
         var ph = window.posthog = window.posthog || [];
