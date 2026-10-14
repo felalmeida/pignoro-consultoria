@@ -35,7 +35,7 @@ function WelcomeMail(array $v_Client, string $v_Link, string $v_SiteUrl, string 
         . $Tx('Para começar, crie a sua senha neste endereço (válido até {data}):', ['data' => $Validade]) . "\r\n$v_Link\r\n\r\n"
         . $Tx('E-mail de acesso') . ': ' . $v_Client['email'] . "\r\n\r\n"
         . $Guarde . ' ' . $GuardeTexto . "\r\n\r\n"
-        . "Pignoro Consultoria\r\n$v_SiteUrl\r\n\r\n"
+        . "Pignoro Ltda.\r\n" . $Tx('Av. Paulista, 1106, 16º andar, Bela Vista, São Paulo - SP') . "\r\ninfo@pignoro.com\r\n$v_SiteUrl\r\n\r\n"
         . $Rodape . "\r\n";
 
     $Subject_ = E($Subject);
@@ -53,6 +53,7 @@ function WelcomeMail(array $v_Client, string $v_Link, string $v_SiteUrl, string 
     $LemaFim = E($Tx('= eu dou uma garantia'));
     $DoLatim = E($Tx('do latim'));
     $Subtitulo = E($Tx('Consultoria Financeira'));
+    $Endereco = E($Tx('Av. Paulista, 1106, 16º andar, Bela Vista, São Paulo - SP'));
 
     $Font = "font-family:'Segoe UI',Helvetica,Arial,sans-serif;";
     $Mono = "font-family:Consolas,Menlo,'Courier New',monospace;";
@@ -86,7 +87,7 @@ function WelcomeMail(array $v_Client, string $v_Link, string $v_SiteUrl, string 
 
 <tr><td class="px" style="background-color:#0b1622;padding:22px 40px;border-bottom:1px solid #1f2c3b;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-        <td width="40" height="40" align="center" valign="middle" style="width:40px;height:40px;background-color:#d9b866;border-radius:8px;{$Font}font-size:24px;line-height:40px;font-weight:700;color:#0b1622;">P</td>
+        <td width="44" height="44" valign="middle" style="width:44px;height:44px;"><img src="{$Site}assets/img/icone-96.png" width="44" height="44" alt="Pignoro" style="display:block;width:44px;height:44px;border:0;{$Font}font-size:12px;color:#d9b866;"></td>
         <td style="padding-left:12px;">
             <div style="{$Font}font-size:19px;line-height:22px;font-weight:700;color:#eef0f3;">Pignoro</div>
             <div style="{$Font}font-size:12px;line-height:16px;letter-spacing:0.5px;color:#aab4c2;">$Subtitulo</div>
@@ -150,7 +151,8 @@ function WelcomeMail(array $v_Client, string $v_Link, string $v_SiteUrl, string 
 <tr><td class="px" style="background-color:#0b1622;padding:30px 40px;">
     <div style="{$Font}font-size:16px;line-height:22px;font-weight:600;color:#eef0f3;">$Lema <span style="color:#d9b866;">$LemaFim</span></div>
     <div style="{$Font}font-size:13px;line-height:20px;color:#aab4c2;padding-top:4px;">$DoLatim <em style="font-family:Georgia,'Times New Roman',serif;">pignorā́re</em></div>
-    <div style="{$Font}font-size:13px;line-height:20px;color:#aab4c2;padding-top:18px;">Pignoro Consultoria &nbsp;·&nbsp; <a href="$Site" style="color:#d9b866;text-decoration:none;">$SiteLabel</a></div>
+    <div style="{$Font}font-size:13px;line-height:20px;color:#aab4c2;padding-top:18px;">Pignoro Ltda. &nbsp;·&nbsp; <a href="$Site" style="color:#d9b866;text-decoration:none;">$SiteLabel</a></div>
+    <div style="{$Font}font-size:13px;line-height:20px;color:#aab4c2;padding-top:4px;">$Endereco &nbsp;·&nbsp; <a href="mailto:info@pignoro.com" style="color:#d9b866;text-decoration:none;">info@pignoro.com</a></div>
 </td></tr>
 
 </table>

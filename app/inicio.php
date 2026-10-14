@@ -705,15 +705,16 @@ function PageHead(string $v_Title, string $v_Active = ''): void
         . '<meta name="robots" content="noindex, nofollow">'
         . '<meta name="csrf" content="' . E(CsrfToken()) . '">'
         . '<title>' . E($v_Title) . ' | Pignoro</title>'
-        . '<link rel="icon" href="' . $Root . 'assets/img/logo.svg" type="image/svg+xml">'
-        . '<link rel="stylesheet" href="' . $Root . 'assets/css/site.css?v=2">'
-        . '<link rel="stylesheet" href="' . $Root . 'assets/css/portal.css?v=3">'
+        . '<link rel="icon" href="' . $Root . 'assets/img/icone-32.png" sizes="32x32" type="image/png">'
+        . '<link rel="apple-touch-icon" href="' . $Root . 'assets/img/icone-180.png">'
+        . '<link rel="stylesheet" href="' . $Root . 'assets/css/site.css?v=3">'
+        . '<link rel="stylesheet" href="' . $Root . 'assets/css/portal.css?v=4">'
         . '<script defer src="' . $Root . 'assets/js/portal.js?v=4"></script>'
         . '</head><body class="portal" data-api="' . $Root . 'cliente/api.php"'
         . ($Lang !== 'pt' ? ' data-textos="' . E((string) json_encode(Dictionary($Lang, 'js'), JSON_UNESCAPED_UNICODE)) . '"' : '') . '>';
 
     echo '<header class="portal-header"><div class="container portal-header-inner">'
-        . '<a class="brand" href="' . $Root . '"><img src="' . $Root . 'assets/img/logo-dark.svg" alt="" width="32" height="32">'
+        . '<a class="brand" href="' . $Root . '"><img src="' . $Root . 'assets/img/icone-96.png" alt="" width="32" height="32">'
         . '<span class="brand-text"><strong>Pignoro</strong><span>' . E(T('Área do cliente')) . '</span></span></a>'
         . '<div class="portal-user"><nav class="lang-switch" aria-label="' . E(T('Idioma')) . '">';
     foreach (IDIOMAS as $Code => $Name)
@@ -742,7 +743,13 @@ function PageHead(string $v_Title, string $v_Active = ''): void
 
 function PageFoot(): void
 {
-    echo '</div></main><footer class="portal-footer"><div class="container">© ' . date('Y') . ' Pignoro Consultoria.</div></footer></body></html>';
+    echo '</div></main><footer class="portal-footer"><div class="container portal-footer-inner">'
+        . '<p>© ' . date('Y') . ' Pignoro Ltda. | ' . E(T('Todos os Direitos Reservados')) . '<br>'
+        . '<a href="https://www.pignoro.com/pt/termos/" target="_blank" rel="noopener" hreflang="pt-BR">'
+        . E(T('Termos de Uso e Política de Privacidade')) . '</a></p>'
+        . '<address>' . E(T('Av. Paulista, 1106, 16º andar, Bela Vista, São Paulo - SP')) . '<br>'
+        . '<a href="mailto:info@pignoro.com">info@pignoro.com</a></address>'
+        . '</div></footer></body></html>';
 }
 
 ResolveLang();

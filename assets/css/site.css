@@ -1645,11 +1645,37 @@ svg {
     color: var(--on-dark);
 }
 
-.footer-copy {
+.footer-bottom {
     grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 16px 40px;
     padding-top: 24px;
     border-top: 1px solid var(--line-dark);
     font-size: 13px;
+    line-height: 1.6;
+}
+
+.footer-legal a,
+.footer-address a {
+    color: var(--on-dark-soft);
+}
+
+.footer-legal a:hover,
+.footer-address a:hover {
+    color: var(--on-dark);
+}
+
+.footer-address {
+    font-style: normal;
+    text-align: right;
+}
+
+@media (max-width: 640px) {
+    .footer-address {
+        text-align: left;
+    }
 }
 
 /* ---------- entrada suave (somente com JS) ---------- */

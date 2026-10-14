@@ -109,6 +109,29 @@ body.portal {
     border-top: 1px solid var(--line);
 }
 
+.portal-footer-inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px 40px;
+    line-height: 1.6;
+}
+
+.portal-footer address {
+    font-style: normal;
+    text-align: right;
+}
+
+.portal-footer a {
+    color: var(--text-soft);
+}
+
+@media (max-width: 640px) {
+    .portal-footer address {
+        text-align: left;
+    }
+}
+
 /* avisos */
 
 .notice {
