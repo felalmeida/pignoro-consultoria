@@ -643,9 +643,9 @@ function PageHead(string $v_Title, string $v_Active = ''): void
     $User = CurrentUser();
     $Nav = [];
     if ($User !== null && $User['papel'] === 'cliente')
-        $Nav = ['painel.php' => 'Início', 'mensagens.php' => 'Mensagens', 'arquivos.php' => 'Arquivos',
-            'cadastro.php' => 'Cadastro', 'registros.php?tipo=contatos' => 'Contatos',
-            'registros.php?tipo=creditos' => 'Créditos', 'registros.php?tipo=operacoes' => 'Operações',
+        // Mensagens, contatos, créditos e operações seguem funcionando (pelo Início e por endereço),
+        // só estão fora do menu por enquanto.
+        $Nav = ['painel.php' => 'Início', 'arquivos.php' => 'Arquivos', 'cadastro.php' => 'Cadastro',
             'conta.php' => 'Minha conta', 'ajuda.php' => 'Ajuda'];
     elseif ($User !== null)
         $Nav = ['admin/index.php' => 'Clientes', 'conta.php' => 'Minha conta', 'ajuda.php' => 'Ajuda'];
