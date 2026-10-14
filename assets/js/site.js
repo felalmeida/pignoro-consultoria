@@ -44,6 +44,11 @@
     if (!medicaoPermitida && (cfg.analyticsId || cfg.posthogKey) && window.console)
         console.warn('Medição desligada: a área do cliente está no mesmo endereço do site (ver areaClienteUrl em config.js).');
 
+    // chaves de quem entrou na área do cliente quando ela ainda ficava neste endereço
+    if (medicaoPermitida && window.indexedDB) {
+        try { indexedDB.deleteDatabase('pignoro'); } catch (e) { /* sem IndexedDB, nada a apagar */ }
+    }
+
     var googleId = medicaoPermitida ? String(cfg.analyticsId || '').trim() : '';
     var usaGa4 = /^G-[A-Z0-9]+$/.test(googleId);
     var usaGtm = /^GTM-[A-Z0-9]+$/.test(googleId);

@@ -68,7 +68,7 @@ if ($Aba === 'resumo') {
     unset($_SESSION['link']);
     if (is_array($Link) && $Link[0] === $Id)
         echo '<div class="notice notice-aviso"><p>' . E(T('Link de acesso, válido por 7 dias. Ele é mostrado só agora; copie se precisar enviá-lo por outro canal:')) . '</p>'
-            . '<p><code class="link-box">' . E(SiteUrl() . $Link[1]) . '</code></p></div>';
+            . '<p><code class="link-box">' . E(PortalUrl() . $Link[1]) . '</code></p></div>';
 
     $Status = !$Client['ativo'] ? T('Desativado') : ($Client['senha_hash'] === null ? T('Aguardando primeiro acesso') : T('Ativo'));
     $Pending = $Client['ativacao_hash'] !== null && (int) $Client['ativacao_expira'] > time();

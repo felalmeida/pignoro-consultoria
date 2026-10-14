@@ -17,6 +17,12 @@ return [
     // Vazio usa o endereço da requisição, o que só serve para teste local.
     'url_site' => 'https://pignoro.felipealmeidaconsultoria.com.br/',
 
+    // Endereço próprio da área do cliente (subdomínio), ex.: 'https://cliente.exemplo.com.br/'.
+    // Preenchido, a área do cliente só funciona nesse endereço: quem abrir /cliente/ pelo endereço
+    // do site é levado para lá, e os links dos e-mails apontam para ele. Vazio: área do cliente no
+    // mesmo endereço do site. Use o mesmo valor em areaClienteUrl, em assets/js/config.js.
+    'url_area_cliente' => '',
+
     // Tempo mínimo (segundos) entre abrir o formulário e enviar. Robôs enviam na hora.
     'tempo_minimo' => 3,
 

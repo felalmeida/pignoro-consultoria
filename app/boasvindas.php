@@ -173,8 +173,7 @@ HTML;
 /** Envia as boas-vindas com o link de primeiro acesso. Devolve false se o e-mail não saiu. */
 function SendWelcome(array $v_Config, array $v_Client, string $v_ActivationPath): bool
 {
-    $SiteUrl = SiteUrl();
-    [$Subject, $Text, $Html] = WelcomeMail($v_Client, $SiteUrl . $v_ActivationPath, $SiteUrl, ValidLang($v_Client['idioma'] ?? null) ?? 'pt');
+    [$Subject, $Text, $Html] = WelcomeMail($v_Client, PortalUrl() . $v_ActivationPath, SiteUrl(), ValidLang($v_Client['idioma'] ?? null) ?? 'pt');
     // respostas do cliente vão para o endereço de contato da Pignoro (destino do formulário)
     $ReplyTo = filter_var((string) ($v_Config['destino'] ?? ''), FILTER_VALIDATE_EMAIL) ? (string) $v_Config['destino'] : '';
     $Sent = SendMail($v_Config, (string) $v_Client['email'], $ReplyTo, $Subject, $Text, $Html);

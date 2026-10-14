@@ -597,17 +597,23 @@ function NewActivation(int $v_UserId): string
     return 'cliente/ativar.php?t=' . $Token;
 }
 
+/** Endereço configurado em config.php, normalizado com barra no fim, ou vazio se ausente ou inválido. */
+function ConfiguredUrl(string $v_Key): string
+{
+    global $Config;
+    $Url = trim((string) ($Config[$v_Key] ?? ''));
+    return preg_match('#^https?://[A-Za-z0-9.-]+(:\d+)?(/[^\s"<>]*)?$#', $Url) === 1 ? rtrim($Url, '/') . '/' : '';
+}
+
 /**
- * Endereço completo do site, para os links enviados por e-mail ou copiados pelo administrador.
- * Vem de 'url_site' em config.php; o cabeçalho Host da requisição pode ser forjado e só é
- * usado quando essa configuração está vazia (teste local).
+ * Endereço completo do site público. Vem de 'url_site' em config.php; o cabeçalho Host da
+ * requisição pode ser forjado e só é usado quando essa configuração está vazia (teste local).
  */
 function SiteUrl(): string
 {
-    global $Config;
-    $Fixed = trim((string) ($Config['url_site'] ?? ''));
-    if (preg_match('#^https?://[A-Za-z0-9.-]+(:\d+)?(/[^\s"<>]*)?$#', $Fixed) === 1)
-        return rtrim($Fixed, '/') . '/';
+    $Fixed = ConfiguredUrl('url_site');
+    if ($Fixed !== '')
+        return $Fixed;
 
     $Host = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
     if (preg_match('/^[A-Za-z0-9.-]+(:\d+)?$/', $Host) !== 1)
@@ -616,6 +622,39 @@ function SiteUrl(): string
     if (str_ends_with($Base, '/cliente'))
         $Base = substr($Base, 0, -8);
     return (IsHttps() ? 'https' : 'http') . '://' . $Host . $Base . '/';
+}
+
+/** Endereço da área do cliente: 'url_area_cliente' quando configurado, senão o do site. */
+function PortalUrl(): string
+{
+    return ConfiguredUrl('url_area_cliente') ?: SiteUrl();
+}
+
+/** Início do site público a partir de uma página da área do cliente. */
+function PublicRoot(): string
+{
+    return ConfiguredUrl('url_area_cliente') !== '' ? SiteUrl() : Root();
+}
+
+/**
+ * Com a área do cliente em endereço próprio, ela não responde pelo endereço do site: quem chega
+ * por ele é levado ao mesmo caminho no endereço da área do cliente. Isso mantém sessão, chaves e
+ * arquivos numa origem onde não roda código de terceiros (medição do site público).
+ */
+function EnforcePortalHost(): void
+{
+    $Portal = ConfiguredUrl('url_area_cliente');
+    if ($Portal === '' || PHP_SAPI === 'cli')
+        return;
+    $Wanted = strtolower((string) parse_url($Portal, PHP_URL_HOST)) . (($Port = parse_url($Portal, PHP_URL_PORT)) ? ':' . $Port : '');
+    if (strtolower((string) ($_SERVER['HTTP_HOST'] ?? '')) === $Wanted)
+        return;
+    $Path = ltrim((string) ($_SERVER['REQUEST_URI'] ?? '/'), '/');
+    $Base = (string) parse_url($Portal, PHP_URL_PATH);
+    if ($Base !== '' && $Base !== '/' && str_starts_with('/' . $Path, $Base))
+        $Path = substr('/' . $Path, strlen($Base));
+    header('Location: ' . $Portal . $Path, true, 307);
+    exit;
 }
 
 /** Impressão digital da chave pública, para conferência por telefone ou outro canal. */
@@ -714,7 +753,7 @@ function PageHead(string $v_Title, string $v_Active = ''): void
         . ($Lang !== 'pt' ? ' data-textos="' . E((string) json_encode(Dictionary($Lang, 'js'), JSON_UNESCAPED_UNICODE)) . '"' : '') . '>';
 
     echo '<header class="portal-header"><div class="container portal-header-inner">'
-        . '<a class="brand" href="' . $Root . '"><img src="' . $Root . 'assets/img/icone-96.png" alt="" width="32" height="32">'
+        . '<a class="brand" href="' . E(PublicRoot()) . '"><img src="' . $Root . 'assets/img/icone-96.png" alt="" width="32" height="32">'
         . '<span class="brand-text"><strong>Pignoro</strong><span>' . E(T('Área do cliente')) . '</span></span></a>'
         . '<div class="portal-user"><nav class="lang-switch" aria-label="' . E(T('Idioma')) . '">';
     foreach (IDIOMAS as $Code => $Name)
@@ -745,11 +784,12 @@ function PageFoot(): void
 {
     echo '</div></main><footer class="portal-footer"><div class="container portal-footer-inner">'
         . '<p>© ' . date('Y') . ' Pignoro Ltda. | ' . E(T('Todos os Direitos Reservados')) . '<br>'
-        . '<a href="' . Root() . 'termos/" hreflang="pt-BR">'
+        . '<a href="' . E(PublicRoot()) . 'termos/" hreflang="pt-BR">'
         . E(T('Termos de Uso e Política de Privacidade')) . '</a></p>'
         . '<address>' . E(T('Av. Paulista, 1106, 16º andar, Bela Vista, São Paulo - SP')) . '<br>'
         . '<a href="mailto:info@pignoro.com">info@pignoro.com</a></address>'
         . '</div></footer></body></html>';
 }
 
+EnforcePortalHost();
 ResolveLang();
