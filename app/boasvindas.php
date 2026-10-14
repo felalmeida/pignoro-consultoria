@@ -52,7 +52,6 @@ function WelcomeMail(array $v_Client, string $v_Link, string $v_SiteUrl, string 
     $Lema = E($Tx('Eu pignoro'));
     $LemaFim = E($Tx('= eu dou uma garantia'));
     $DoLatim = E($Tx('do latim'));
-    $Subtitulo = E($Tx('Consultoria Financeira'));
     $Endereco = E($Tx('Av. Paulista, 1106, 16º andar, Bela Vista, São Paulo - SP'));
 
     $Font = "font-family:'Libre Franklin','Segoe UI',Helvetica,Arial,sans-serif;";
@@ -88,7 +87,6 @@ function WelcomeMail(array $v_Client, string $v_Link, string $v_SiteUrl, string 
         <td width="44" height="44" valign="middle" style="width:44px;height:44px;"><img src="{$Site}assets/img/icone-96.png?v=2" width="44" height="44" alt="Pignoro" style="display:block;width:44px;height:44px;border:0;{$Font}font-size:12px;color:#d9b866;"></td>
         <td style="padding-left:12px;">
             <div style="{$Font}font-size:19px;line-height:22px;font-weight:700;color:#eef0f3;">Pignoro</div>
-            <div style="{$Font}font-size:12px;line-height:16px;letter-spacing:0.5px;color:#aab4c2;">$Subtitulo</div>
         </td>
     </tr></table>
 </td></tr>

@@ -137,7 +137,6 @@ return [
     'Arquivos protegidos' => 'Protected files',
     'Boas-vindas à área do cliente da Pignoro' => 'Welcome to the Pignoro client area',
     'Boas-vindas, {nome}.' => 'Welcome, {nome}.',
-    'Consultoria Financeira' => 'Financial Advisory',
     'Criar a minha senha' => 'Create my password',
     'Crie a sua senha para acessar a área do cliente. O link vale até {data}.' => 'Create your password to access the client area. The link is valid until {data}.',
     'Dados da sua empresa ou fundo, sempre atualizados para a Pignoro.' => 'Your company or fund details, always up to date for Pignoro.',
