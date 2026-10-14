@@ -102,8 +102,12 @@ function FilesRoot(): string
         $Problem = 'não existe e não pôde ser criada';
     elseif (is_link($Dir) || !is_dir($Dir))
         $Problem = 'não é uma pasta real';
-    elseif ((fileperms($Dir) & 0002) !== 0 && !@chmod($Dir, 0700))
-        $Problem = 'aceita gravação de qualquer usuário (use dono www-data e permissão 700, não 777)';
+    // Só o usuário do PHP pode mexer nesta árvore. Assim ninguém mais no servidor consegue trocar
+    // uma pasta por um link simbólico entre a conferência e a gravação.
+    elseif (function_exists('posix_geteuid') && fileowner($Dir) !== posix_geteuid())
+        $Problem = 'pertence a outro usuário (o dono precisa ser o usuário do PHP)';
+    elseif ((fileperms($Dir) & 0077) !== 0 && !@chmod($Dir, 0700))
+        $Problem = 'está acessível a outros usuários (use permissão 700)';
     elseif (!is_writable($Dir))
         $Problem = 'está sem permissão de escrita';
     if ($Problem !== '')

@@ -78,8 +78,7 @@ clientes, respondem mensagens, mudam a situação de créditos e operações e e
    Os arquivos cifrados ficam em `arquivos/`, na raiz do projeto (ou em `pasta_arquivos`, em
    `config/config.php`), numa pasta por cliente cujo nome é o id dele: `arquivos/12/` guarda os
    arquivos do cliente 12. O id aparece no endereço da ficha do cliente (`cliente.php?id=12`).
-   A pasta precisa pertencer ao usuário do PHP ou aceitar gravação dele, sem ficar aberta a todos
-   (permissão 777 é recusada), e não pode ser um link simbólico:
+   A pasta precisa pertencer ao usuário do PHP, com permissão 700, e não pode ser um link simbólico:
 
    ```
    chown -R www-data: arquivos && chmod 700 arquivos
