@@ -490,10 +490,21 @@ function NewActivation(int $v_UserId): string
     return 'cliente/ativar.php?t=' . $Token;
 }
 
-/** Endereço completo do site, para montar links que serão enviados por fora. */
+/**
+ * Endereço completo do site, para os links enviados por e-mail ou copiados pelo administrador.
+ * Vem de 'url_site' em config.php; o cabeçalho Host da requisição pode ser forjado e só é
+ * usado quando essa configuração está vazia (teste local).
+ */
 function SiteUrl(): string
 {
+    global $Config;
+    $Fixed = trim((string) ($Config['url_site'] ?? ''));
+    if (preg_match('#^https?://[A-Za-z0-9.-]+(:\d+)?(/[^\s"<>]*)?$#', $Fixed) === 1)
+        return rtrim($Fixed, '/') . '/';
+
     $Host = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
+    if (preg_match('/^[A-Za-z0-9.-]+(:\d+)?$/', $Host) !== 1)
+        $Host = 'localhost';
     $Base = rtrim(dirname(dirname((string) ($_SERVER['SCRIPT_NAME'] ?? '/cliente/x'))), '/');
     if (str_ends_with($Base, '/cliente'))
         $Base = substr($Base, 0, -8);

@@ -12,6 +12,11 @@ return [
 
     'nome_site' => 'Pignoro Consultoria',
 
+    // Endereço público do site, usado nos links enviados por e-mail (primeiro acesso do cliente).
+    // Fica fixo aqui para o link nunca depender do endereço informado pelo navegador.
+    // Vazio usa o endereço da requisição, o que só serve para teste local.
+    'url_site' => 'https://pignoro.felipealmeidaconsultoria.com.br/',
+
     // Tempo mínimo (segundos) entre abrir o formulário e enviar. Robôs enviam na hora.
     'tempo_minimo' => 3,
 
