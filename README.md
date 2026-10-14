@@ -110,9 +110,8 @@ topo da área do cliente.
 
 ## Área do cliente
 
-Fica em `/cliente/`. Clientes trocam mensagens com a Pignoro, mantêm o cadastro (empresa ou fundo,
-pessoas de contato, créditos para cobrança e operações) e baixam arquivos. Administradores criam os
-clientes, respondem mensagens, mudam a situação de créditos e operações e enviam arquivos.
+Fica em `/cliente/`. Clientes mantêm o cadastro da empresa ou do fundo e baixam os arquivos enviados
+pela Pignoro. Administradores criam os clientes, definem o idioma de cada um e enviam arquivos.
 
 ### Instalação
 
@@ -169,7 +168,7 @@ reenvia a mensagem enquanto ele não tiver feito o primeiro acesso.
   conteúdo, nome e tipo do arquivo já cifrados e não tem como abri-los.
 - **Download.** A função `baixarArquivoDecifrado`, em `assets/js/portal.js`, baixa o arquivo cifrado,
   decifra no navegador e entrega o arquivo aberto.
-- **Mensagens e cadastros** ficam no SQLite sem criptografia de ponta a ponta.
+- **Dados cadastrais** ficam no SQLite sem criptografia de ponta a ponta.
 
 ### O que isso implica
 
