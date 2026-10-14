@@ -11,9 +11,9 @@ $User = preg_match('/^[0-9a-f]{64}$/', $Token) !== 1 ? null
 StartSession();
 unset($_SESSION['uid'], $_SESSION['marca']);
 
-// sem escolha feita no seletor, a página abre no idioma definido para o cliente
-if ($User !== null && ValidLang($_GET['idioma'] ?? null) === null && ValidLang($_COOKIE['pignoro_idioma'] ?? null) === null)
-    Lang($User['idioma']);
+// a página abre no idioma definido para a conta pelo administrador
+if ($User !== null)
+    Lang(ValidLang($User['idioma']) ?? 'pt');
 
 PageHead(T('Criar senha'));
 echo '<section class="auth-card">';

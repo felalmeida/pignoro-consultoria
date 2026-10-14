@@ -65,6 +65,7 @@ return [
     'Idioma' => 'Idioma',
     'Idioma do cliente' => 'Idioma del cliente',
     'Idioma do cliente atualizado.' => 'Idioma del cliente actualizado.',
+    'definido pela Pignoro' => 'definido por Pignoro',
     'Impressão digital da chave' => 'Huella digital de la clave',
     'Informe o nome e um e-mail válido.' => 'Indique el nombre y un correo electrónico válido.',
     'Informe um e-mail válido.' => 'Indique un correo electrónico válido.',

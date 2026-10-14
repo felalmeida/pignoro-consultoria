@@ -65,6 +65,7 @@ return [
     'Idioma' => 'Language',
     'Idioma do cliente' => 'Client language',
     'Idioma do cliente atualizado.' => 'Client language updated.',
+    'definido pela Pignoro' => 'set by Pignoro',
     'Impressão digital da chave' => 'Key fingerprint',
     'Informe o nome e um e-mail válido.' => 'Enter the name and a valid e-mail.',
     'Informe um e-mail válido.' => 'Enter a valid e-mail.',

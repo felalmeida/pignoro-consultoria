@@ -13,7 +13,7 @@ PageHead(T('Minha conta'), 'conta.php');
 <dl class="facts card-box">
     <div><dt><?= E(T('Nome')) ?></dt><dd><?= E($User['nome']) ?></dd></div>
     <div><dt><?= E(T('E-mail de acesso')) ?></dt><dd><?= E($User['email']) ?></dd></div>
-    <div><dt><?= E(T('Idioma')) ?></dt><dd><?= E(IDIOMAS[ValidLang($User['idioma']) ?? 'pt']) ?></dd></div>
+    <div><dt><?= E(T('Idioma')) ?></dt><dd><?= E(IDIOMAS[ValidLang($User['idioma']) ?? 'pt']) ?><?= $User['papel'] === 'cliente' ? ' <small>(' . E(T('definido pela Pignoro')) . ')</small>' : '' ?></dd></div>
     <div><dt><?= E(T('Impressão digital da chave')) ?></dt><dd><code><?= E(Fingerprint($User['chave_publica'])) ?></code></dd></div>
 </dl>
 <p class="hint"><?= E(T('A impressão digital identifica a chave que protege os seus arquivos. Se quiser, confira por telefone se a Pignoro vê a mesma sequência.')) ?></p>

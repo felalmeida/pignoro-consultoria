@@ -482,24 +482,28 @@ function SessionMark(array $v_User): string
 }
 
 /**
- * Define o idioma da requisição. Ordem: ?idioma= (troca pelo seletor, que fica gravada no cookie
- * e na conta), cookie, idioma da conta e, por fim, o idioma preferido do navegador.
+ * Define o idioma da requisição.
+ * Cliente logado: sempre o idioma da conta, que só o administrador altera (ficha do cliente).
+ * Demais casos: ?idioma= (link do site no idioma da página ou seletor do administrador, gravado
+ * no cookie e, para o administrador, na conta), cookie, idioma da conta e o preferido do navegador.
  */
 function ResolveLang(): void
 {
+    $User = isset($_COOKIE['pignoro_sessao']) ? CurrentUser() : null;
+    if ($User !== null && $User['papel'] === 'cliente') {
+        Lang(ValidLang($User['idioma']) ?? 'pt');
+        return;
+    }
+
     $Chosen = ValidLang($_GET['idioma'] ?? null);
     if ($Chosen !== null) {
         setcookie('pignoro_idioma', $Chosen, ['expires' => time() + 365 * 86400, 'path' => '/',
             'secure' => IsHttps(), 'httponly' => true, 'samesite' => 'Lax']);
         $_COOKIE['pignoro_idioma'] = $Chosen;
     }
-    $Lang = $Chosen ?? ValidLang($_COOKIE['pignoro_idioma'] ?? null);
-    if ($Lang === null && isset($_COOKIE['pignoro_sessao'])) {
-        $User = CurrentUser();
-        $Lang = ValidLang($User['idioma'] ?? null);
-    }
+    $Lang = $Chosen ?? ValidLang($_COOKIE['pignoro_idioma'] ?? null) ?? ValidLang($User['idioma'] ?? null);
     Lang($Lang ?? BrowserLang());
-    if ($Chosen !== null && isset($_COOKIE['pignoro_sessao']) && ($User = CurrentUser()) !== null && $User['idioma'] !== $Chosen)
+    if ($Chosen !== null && $User !== null && $User['idioma'] !== $Chosen)
         Query('UPDATE usuarios SET idioma = ? WHERE id = ?', [$Chosen, $User['id']]);
 }
 
@@ -715,11 +719,15 @@ function PageHead(string $v_Title, string $v_Active = ''): void
     echo '<header class="portal-header"><div class="container portal-header-inner">'
         . '<a class="brand" href="' . E(PublicRoot()) . '"><img src="' . $Root . 'assets/img/icone-96.png?v=2" alt="" width="32" height="32">'
         . '<span class="brand-text"><strong>Pignoro</strong><span>' . E(T('Área do cliente')) . '</span></span></a>'
-        . '<div class="portal-user"><nav class="lang-switch" aria-label="' . E(T('Idioma')) . '">';
-    foreach (IDIOMAS as $Code => $Name)
-        echo '<a href="' . E(LangUrl($Code)) . '" hreflang="' . $Code . '" lang="' . $Code . '" title="' . E($Name) . '"'
-            . ($Code === $Lang ? ' aria-current="true"' : '') . '>' . strtoupper($Code) . '</a>';
-    echo '</nav>';
+        . '<div class="portal-user">';
+    // seletor de idioma só para o administrador; o idioma do cliente é definido na ficha dele
+    if ($User !== null && $User['papel'] === 'admin') {
+        echo '<nav class="lang-switch" aria-label="' . E(T('Idioma')) . '">';
+        foreach (IDIOMAS as $Code => $Name)
+            echo '<a href="' . E(LangUrl($Code)) . '" hreflang="' . $Code . '" lang="' . $Code . '" title="' . E($Name) . '"'
+                . ($Code === $Lang ? ' aria-current="true"' : '') . '>' . strtoupper($Code) . '</a>';
+        echo '</nav>';
+    }
     if ($User !== null)
         echo '<span class="portal-user-name">' . E($User['nome']) . '</span>'
             . '<form method="post" action="' . $Root . 'cliente/sair.php" data-sair>' . CsrfField()

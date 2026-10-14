@@ -92,8 +92,8 @@ receberem a versão nova na hora.
 
 ## Idiomas
 
-O site existe em português, inglês e espanhol. O seletor PT · EN · ES fica no menu do site e no
-topo da área do cliente.
+O site existe em português, inglês e espanhol. O seletor PT · EN · ES fica no menu do site público e,
+na área do cliente, só para administradores.
 
 - **Site público:** três páginas estáticas, `index.html` (português), `en/index.html` e
   `es/index.html`. Ao alterar um texto em português, altere também as outras duas. Os valores
@@ -102,9 +102,11 @@ topo da área do cliente.
 - **Área do cliente:** os textos ficam em português no código, dentro de `T('...')`, e as
   traduções em `app/idiomas/en.php` e `es.php` (e `en-js.php`, `es-js.php` para o JavaScript),
   com o texto em português como chave. Texto novo sem tradução aparece em português.
-- **Idioma de cada cliente:** escolhido pelo administrador ao criar o cliente (e alterável na ficha
-  dele). É o idioma do e-mail de boas-vindas e o padrão da área do cliente. Quando o cliente usa o
-  seletor, a escolha fica gravada na conta e num cookie.
+- **Idioma de cada cliente:** definido pelo administrador ao criar o cliente e alterável só por ele,
+  na ficha do cliente. É o idioma do e-mail de boas-vindas, da criação de senha e de toda a área do
+  cliente depois do login; o cliente não tem seletor e o `?idioma=` no endereço é ignorado para ele.
+  A tela de entrada, antes do login, segue o idioma do link de onde a pessoa veio (ou do navegador).
+  O administrador mantém o seletor PT · EN · ES para a própria tela.
 - **Formatos:** em inglês, datas em mês/dia/ano e valores como 1,234.56; em português e espanhol,
   dia/mês/ano e 1.234,56.
 
