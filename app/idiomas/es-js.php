@@ -5,7 +5,7 @@ return [
     'A senha atual não confere.' => 'La contraseña actual no coincide.',
     'A senha precisa ter pelo menos {n} caracteres.' => 'La contraseña debe tener al menos {n} caracteres.',
     'Abrindo...' => 'Abriendo...',
-    'Alguns arquivos foram enviados antes da sua senha atual e aguardam liberação. Avise a Pignoro por mensagem.' => 'Algunos archivos se enviaron antes de su contraseña actual y esperan ser liberados. Avise a Pignoro.',
+    'Alguns arquivos foram enviados antes da sua senha atual e aguardam liberação. Avise a Pignoro pelo e-mail info@pignoro.com.' => 'Algunos archivos se enviaron antes de su contraseña actual y esperan ser liberados. Avise a Pignoro en info@pignoro.com.',
     'Arquivo ainda não liberado para esta conta' => 'Archivo aún no liberado para esta cuenta',
     'Arquivo enviado.' => 'Archivo enviado.',
     'As duas senhas não são iguais.' => 'Las dos contraseñas no coinciden.',

@@ -29,8 +29,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     Redirect('admin/index.php');
 }
 
-$Clients = Query("SELECT u.*, e.razao_social,
-        (SELECT COUNT(*) FROM mensagens m WHERE m.cliente_id = u.id AND m.autor_id = u.id AND m.lida_em IS NULL) AS nao_lidas
+$Clients = Query("SELECT u.*, e.razao_social
     FROM usuarios u LEFT JOIN empresas e ON e.usuario_id = u.id
     WHERE u.papel = 'cliente' ORDER BY u.nome COLLATE NOCASE")->fetchAll();
 
@@ -40,15 +39,13 @@ if (!$Clients) {
     echo '<p class="empty">' . E(T('Nenhum cliente cadastrado.')) . '</p>';
 } else {
     echo '<div class="table-wrap"><table class="table"><thead><tr><th>' . E(T('Cliente')) . '</th><th>' . E(T('E-mail')) . '</th><th>'
-        . E(T('Acesso')) . '</th><th>' . E(T('Mensagens')) . '</th></tr></thead><tbody>';
+        . E(T('Acesso')) . '</th></tr></thead><tbody>';
     foreach ($Clients as $Client) {
         $Status = !$Client['ativo'] ? T('Desativado') : ($Client['senha_hash'] === null ? T('Aguardando primeiro acesso') : T('Ativo'));
         echo '<tr><td data-label="' . E(T('Cliente')) . '"><a href="cliente.php?id=' . (int) $Client['id'] . '"><strong>' . E($Client['nome']) . '</strong></a>'
             . ($Client['razao_social'] ? '<br><small>' . E($Client['razao_social']) . '</small>' : '') . '</td>'
             . '<td data-label="' . E(T('E-mail')) . '">' . E($Client['email']) . '</td>'
-            . '<td data-label="' . E(T('Acesso')) . '"><span class="tag">' . E($Status) . '</span></td>'
-            . '<td data-label="' . E(T('Mensagens')) . '">' . ((int) $Client['nao_lidas'] > 0
-                ? '<span class="tag tag-alert">' . E(T('{n} não lidas', ['n' => (int) $Client['nao_lidas']])) . '</span>' : '') . '</td></tr>';
+            . '<td data-label="' . E(T('Acesso')) . '"><span class="tag">' . E($Status) . '</span></td></tr>';
     }
     echo '</tbody></table></div>';
 }

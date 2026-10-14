@@ -45,7 +45,7 @@
     <dl class="faq-list">
         <dt>I see "File not yet released for this account".</dt>
         <dd>The file was sent before your first access or before a password reset, and has not yet been locked with
-            your current key. Let Pignoro know so that the file can be released.</dd>
+            your current key. Write to <a href="mailto:info@pignoro.com">info@pignoro.com</a> so that Pignoro can release the file.</dd>
 
         <dt>I forgot my password.</dt>
         <dd>The password cannot be recovered, not even by Pignoro. Ask for a new access link: when you create the new
@@ -74,8 +74,8 @@
     <h2 id="limites">What this protection covers</h2>
     <ul class="bullets">
         <li><strong>Files:</strong> end-to-end encrypted, as described above.</li>
-        <li><strong>Messages and records:</strong> travel over a secure connection (HTTPS) and require sign-in, but are
-            readable by the Pignoro team, which needs them to serve you.</li>
+        <li><strong>Profile data:</strong> travels over a secure connection (HTTPS) and requires sign-in, but is
+            readable by the Pignoro team, which needs it to serve you.</li>
         <li><strong>Your computer:</strong> protection ends in your browser. Keep your computer and browser up to date
             and use a password you do not use anywhere else.</li>
     </ul>

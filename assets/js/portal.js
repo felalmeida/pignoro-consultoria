@@ -399,7 +399,7 @@
             lista.appendChild(aviso);
         } else if (!ehAdmin && dados.arquivos.some(function (a) { return !a.chave; })) {
             lista.appendChild(el('p', 'notice notice-aviso',
-                t('Alguns arquivos foram enviados antes da sua senha atual e aguardam liberação. Avise a Pignoro por mensagem.')));
+                t('Alguns arquivos foram enviados antes da sua senha atual e aguardam liberação. Avise a Pignoro pelo e-mail info@pignoro.com.')));
         }
         lista.appendChild(ul);
     }

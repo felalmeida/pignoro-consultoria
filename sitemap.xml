@@ -25,4 +25,12 @@
         <loc>https://pignoro.felipealmeidaconsultoria.com.br/termos/</loc>
         <changefreq>yearly</changefreq>
     </url>
+    <url>
+        <loc>https://pignoro.felipealmeidaconsultoria.com.br/en/termos/</loc>
+        <changefreq>yearly</changefreq>
+    </url>
+    <url>
+        <loc>https://pignoro.felipealmeidaconsultoria.com.br/es/termos/</loc>
+        <changefreq>yearly</changefreq>
+    </url>
 </urlset>

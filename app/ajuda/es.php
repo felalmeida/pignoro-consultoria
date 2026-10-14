@@ -45,7 +45,7 @@
     <dl class="faq-list">
         <dt>Aparece "Archivo aún no liberado para esta cuenta".</dt>
         <dd>El archivo se envió antes de su primer acceso o antes de un restablecimiento de contraseña, y todavía no se
-            cerró con su clave actual. Avise a Pignoro para que libere el archivo.</dd>
+            cerró con su clave actual. Escriba a <a href="mailto:info@pignoro.com">info@pignoro.com</a> para que Pignoro libere el archivo.</dd>
 
         <dt>Olvidé mi contraseña.</dt>
         <dd>La contraseña no se puede recuperar, ni siquiera por Pignoro. Pida un nuevo enlace de acceso: al crear la
@@ -75,7 +75,7 @@
     <h2 id="limites">Qué cubre esta protección</h2>
     <ul class="bullets">
         <li><strong>Archivos:</strong> cifrados de extremo a extremo, como se describe arriba.</li>
-        <li><strong>Mensajes y registros:</strong> viajan por una conexión segura (HTTPS) y exigen ingreso, pero el equipo
+        <li><strong>Datos del perfil:</strong> viajan por una conexión segura (HTTPS) y exigen ingreso, pero el equipo
             de Pignoro puede leerlos, porque los necesita para atenderle.</li>
         <li><strong>Su computadora:</strong> la protección termina en su navegador. Mantenga la computadora y el navegador
             actualizados y use una contraseña que no use en ningún otro lugar.</li>

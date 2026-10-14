@@ -25,7 +25,7 @@ function WelcomeMail(array $v_Client, string $v_Link, string $v_SiteUrl, string 
     $Link = E($v_Link);
 
     $Subject = $Tx('Boas-vindas à área do cliente da Pignoro');
-    $Intro = $Tx('A Pignoro criou o seu acesso à área do cliente. Nela você conversa com a nossa equipe, mantém o seu cadastro, registra créditos e operações e recebe documentos protegidos por criptografia de ponta a ponta.');
+    $Intro = $Tx('A Pignoro criou o seu acesso à área do cliente. Nela você mantém o cadastro da sua empresa ou fundo e recebe documentos protegidos por criptografia de ponta a ponta.');
     $Guarde = $Tx('Guarde bem a sua senha.');
     $GuardeTexto = $Tx('Ela também protege os seus arquivos e não pode ser recuperada, nem pela Pignoro. A Pignoro nunca pede a sua senha por e-mail, telefone ou mensagem.');
     $Rodape = $Tx('Você recebeu este e-mail porque a Pignoro cadastrou este endereço na área do cliente. Se não reconhece este cadastro, ignore a mensagem: sem a criação da senha, nenhum acesso é aberto.');
@@ -58,10 +58,8 @@ function WelcomeMail(array $v_Client, string $v_Link, string $v_SiteUrl, string 
     $Font = "font-family:'Segoe UI',Helvetica,Arial,sans-serif;";
     $Mono = "font-family:Consolas,Menlo,'Courier New',monospace;";
     $Itens = [
-        [$Tx('Mensagens'), $Tx('Conversa direta com a equipe da Pignoro, com todo o histórico registrado.')],
-        [$Tx('Cadastro'), $Tx('Dados da sua empresa ou fundo e das pessoas de contato.')],
-        [$Tx('Créditos e operações'), $Tx('Registro dos créditos para cobrança e das operações casadas, de câmbio e de hedge.')],
         [$Tx('Arquivos protegidos'), $Tx('Documentos cifrados de ponta a ponta, que só você consegue abrir.')],
+        [$Tx('Cadastro'), $Tx('Dados da sua empresa ou fundo, sempre atualizados para a Pignoro.')],
     ];
     $Lista = '';
     foreach ($Itens as [$Titulo, $Descricao])

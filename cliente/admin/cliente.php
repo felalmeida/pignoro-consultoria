@@ -1,34 +1,19 @@
 <?php
-/** Administração: tudo sobre um cliente. cliente.php?id=N&aba=resumo|mensagens|arquivos|creditos|operacoes|contatos */
+/** Administração: tudo sobre um cliente. cliente.php?id=N&aba=resumo|arquivos */
 declare(strict_types=1);
 require __DIR__ . '/../../app/inicio.php';
-require __DIR__ . '/../../app/registros.php';
-require __DIR__ . '/../../app/mensagens.php';
 require __DIR__ . '/../../app/boasvindas.php';
 
 $Admin = RequireRole('admin');
 $Client = ClientOr404((int) ($_GET['id'] ?? 0));
 $Id = (int) $Client['id'];
-$Abas = ['resumo' => T('Resumo'), 'mensagens' => T('Mensagens'), 'arquivos' => T('Arquivos'), 'creditos' => T('Créditos'),
-    'operacoes' => T('Operações'), 'contatos' => T('Contatos')];
+$Abas = ['resumo' => T('Resumo'), 'arquivos' => T('Arquivos')];
 $Aba = isset($Abas[$_GET['aba'] ?? '']) ? $_GET['aba'] : 'resumo';
 $Self = 'admin/cliente.php?id=' . $Id . '&aba=' . $Aba;
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     CheckCsrf();
     switch ($_POST['acao'] ?? '') {
-        case 'mensagem':
-            $Error = MensagemEnviar($Id, (int) $Admin['id']);
-            Flash($Error === '' ? 'ok' : 'erro', $Error === '' ? T('Mensagem enviada.') : $Error);
-            break;
-        case 'situacao':
-            $Def = RegistroDef($Aba);
-            $Situacao = is_string($_POST['situacao'] ?? null) ? $_POST['situacao'] : '';
-            if (isset($Def['situacoes'][$Situacao])) {
-                Query("UPDATE {$Def['tabela']} SET situacao = ? WHERE id = ? AND usuario_id = ?", [$Situacao, (int) ($_POST['registro'] ?? 0), $Id]);
-                Flash('ok', T('Situação atualizada.'));
-            }
-            break;
         case 'link':
             $Link = NewActivation($Id);
             $_SESSION['link'] = [$Id, $Link];
@@ -106,9 +91,7 @@ if ($Aba === 'resumo') {
             echo '<div><dt>' . E($Label) . '</dt><dd>' . E($Value) . '</dd></div>';
         echo '</dl>';
     }
-} elseif ($Aba === 'mensagens') {
-    MensagemConversa($Id, $Admin, Root() . 'cliente/' . $Self);
-} elseif ($Aba === 'arquivos') {
+} else {
     ?>
     <form id="form-destravar" class="pform card-box" hidden novalidate>
         <p class="pfield-wide"><?= E(T('Para ver os nomes e baixar os arquivos neste navegador, confirme a sua senha.')) ?></p>
@@ -127,18 +110,5 @@ if ($Aba === 'resumo') {
     <?php endif; ?>
     <div id="arquivos" data-cliente="<?= $Id ?>" data-papel="admin"><p class="empty"><?= E(T('Carregando...')) ?></p></div>
     <?php
-} else {
-    $Def = RegistroDef($Aba);
-    $Rows = Query("SELECT * FROM {$Def['tabela']} WHERE usuario_id = ? ORDER BY id DESC", [$Id])->fetchAll();
-    RegistroTabela($Def, $Rows, function (array $v_Row) use ($Def, $Action): string {
-        if (!$Def['situacoes'])
-            return '';
-        $Html = '<form class="inline-form" method="post" action="' . $Action . '">' . CsrfField()
-            . '<input type="hidden" name="acao" value="situacao"><input type="hidden" name="registro" value="' . (int) $v_Row['id'] . '">'
-            . '<select name="situacao" aria-label="' . E(T('Situação')) . '">';
-        foreach ($Def['situacoes'] as $Key => $Label)
-            $Html .= '<option value="' . E($Key) . '"' . ($Key === $v_Row['situacao'] ? ' selected' : '') . '>' . E($Label) . '</option>';
-        return $Html . '</select><button class="pbtn" type="submit">' . E(T('Salvar')) . '</button></form>';
-    });
 }
 PageFoot();

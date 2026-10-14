@@ -47,8 +47,8 @@
     <dl class="faq-list">
         <dt>Apareceu "Arquivo ainda não liberado para esta conta".</dt>
         <dd>O arquivo foi enviado antes do seu primeiro acesso ou antes de uma redefinição de senha, e ainda
-            não foi trancado com a sua chave atual. Avise a Pignoro em <a href="mensagens.php">Mensagens</a>
-            para que ela libere o arquivo.</dd>
+            não foi trancado com a sua chave atual. Avise a Pignoro pelo e-mail
+            <a href="mailto:info@pignoro.com">info@pignoro.com</a> para que ela libere o arquivo.</dd>
 
         <dt>Esqueci a minha senha.</dt>
         <dd>A senha não pode ser recuperada, nem pela Pignoro. Peça um novo link de acesso: ao criar a nova
@@ -78,7 +78,7 @@
     <h2 id="limites">O que esta proteção cobre</h2>
     <ul class="bullets">
         <li><strong>Arquivos:</strong> cifrados de ponta a ponta, como descrito acima.</li>
-        <li><strong>Mensagens e cadastros:</strong> trafegam por conexão segura (HTTPS) e exigem login, mas ficam
+        <li><strong>Dados do cadastro:</strong> trafegam por conexão segura (HTTPS) e exigem login, mas ficam
             legíveis para a equipe da Pignoro, que precisa deles para atender você.</li>
         <li><strong>Seu computador:</strong> a proteção termina no seu navegador. Mantenha o computador e o
             navegador atualizados e use uma senha que você não usa em outro lugar.</li>

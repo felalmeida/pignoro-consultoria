@@ -199,13 +199,17 @@ function Db(): PDO
 function Migrate(PDO $v_Pdo): void
 {
     $Version = (int) $v_Pdo->query('PRAGMA user_version')->fetchColumn();
-    if ($Version >= 2)
+    if ($Version >= 3)
         return;
-    if ($Version === 1) {
+    if ($Version >= 1) {
         $v_Pdo->exec('BEGIN IMMEDIATE');
-        $v_Pdo->exec("ALTER TABLE usuarios ADD COLUMN idioma TEXT NOT NULL DEFAULT 'pt'");
-        $v_Pdo->exec('PRAGMA user_version = 2');
+        if ($Version === 1)
+            $v_Pdo->exec("ALTER TABLE usuarios ADD COLUMN idioma TEXT NOT NULL DEFAULT 'pt'");
+        // versão 3: mensagens, contatos, créditos e operações saíram da área do cliente
+        $v_Pdo->exec('DROP TABLE IF EXISTS mensagens; DROP TABLE IF EXISTS contatos; DROP TABLE IF EXISTS creditos; DROP TABLE IF EXISTS operacoes');
+        $v_Pdo->exec('PRAGMA user_version = 3');
         $v_Pdo->exec('COMMIT');
+        $v_Pdo->exec('VACUUM');
         return;
     }
 
@@ -242,48 +246,6 @@ function Migrate(PDO $v_Pdo): void
             telefone TEXT NOT NULL DEFAULT '',
             atualizado_em INTEGER
         );
-        CREATE TABLE IF NOT EXISTS contatos (
-            id INTEGER PRIMARY KEY,
-            usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-            nome TEXT NOT NULL,
-            cargo TEXT NOT NULL DEFAULT '',
-            email TEXT NOT NULL DEFAULT '',
-            telefone TEXT NOT NULL DEFAULT '',
-            criado_em INTEGER NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS creditos (
-            id INTEGER PRIMARY KEY,
-            usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-            devedor TEXT NOT NULL,
-            documento TEXT NOT NULL DEFAULT '',
-            valor INTEGER NOT NULL DEFAULT 0,
-            vencimento TEXT NOT NULL DEFAULT '',
-            garantia TEXT NOT NULL DEFAULT '',
-            observacoes TEXT NOT NULL DEFAULT '',
-            situacao TEXT NOT NULL DEFAULT 'novo',
-            criado_em INTEGER NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS operacoes (
-            id INTEGER PRIMARY KEY,
-            usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-            tipo TEXT NOT NULL,
-            descricao TEXT NOT NULL,
-            moeda TEXT NOT NULL DEFAULT '',
-            valor INTEGER NOT NULL DEFAULT 0,
-            data_prevista TEXT NOT NULL DEFAULT '',
-            observacoes TEXT NOT NULL DEFAULT '',
-            situacao TEXT NOT NULL DEFAULT 'nova',
-            criado_em INTEGER NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS mensagens (
-            id INTEGER PRIMARY KEY,
-            cliente_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-            autor_id INTEGER NOT NULL REFERENCES usuarios(id),
-            texto TEXT NOT NULL,
-            criado_em INTEGER NOT NULL,
-            lida_em INTEGER
-        );
-        CREATE INDEX IF NOT EXISTS mensagens_cliente ON mensagens (cliente_id, id);
         CREATE TABLE IF NOT EXISTS arquivos (
             id INTEGER PRIMARY KEY,
             cliente_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
@@ -307,7 +269,7 @@ function Migrate(PDO $v_Pdo): void
             quando INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS tentativas_chave ON tentativas (chave, quando);
-        PRAGMA user_version = 2;
+        PRAGMA user_version = 3;
         SQL);
     $v_Pdo->exec('COMMIT');
 }
@@ -730,8 +692,6 @@ function PageHead(string $v_Title, string $v_Active = ''): void
     $User = CurrentUser();
     $Nav = [];
     if ($User !== null && $User['papel'] === 'cliente')
-        // Mensagens, contatos, créditos e operações seguem funcionando (pelo Início e por endereço),
-        // só estão fora do menu por enquanto.
         $Nav = ['painel.php' => T('Início'), 'arquivos.php' => T('Arquivos'), 'cadastro.php' => T('Cadastro'),
             'conta.php' => T('Minha conta'), 'ajuda.php' => T('Ajuda')];
     elseif ($User !== null)
@@ -748,7 +708,7 @@ function PageHead(string $v_Title, string $v_Active = ''): void
         . '<link rel="apple-touch-icon" href="' . $Root . 'assets/img/icone-180.png">'
         . '<link rel="stylesheet" href="' . $Root . 'assets/css/site.css?v=5">'
         . '<link rel="stylesheet" href="' . $Root . 'assets/css/portal.css?v=4">'
-        . '<script defer src="' . $Root . 'assets/js/portal.js?v=4"></script>'
+        . '<script defer src="' . $Root . 'assets/js/portal.js?v=5"></script>'
         . '</head><body class="portal" data-api="' . $Root . 'cliente/api.php"'
         . ($Lang !== 'pt' ? ' data-textos="' . E((string) json_encode(Dictionary($Lang, 'js'), JSON_UNESCAPED_UNICODE)) . '"' : '') . '>';
 
@@ -784,7 +744,7 @@ function PageFoot(): void
 {
     echo '</div></main><footer class="portal-footer"><div class="container portal-footer-inner">'
         . '<p>© ' . date('Y') . ' Pignoro Ltda. | ' . E(T('Todos os Direitos Reservados')) . '<br>'
-        . '<a href="' . E(PublicRoot()) . 'termos/" hreflang="pt-BR">'
+        . '<a href="' . E(PublicRoot()) . (Lang() === 'pt' ? '' : Lang() . '/') . 'termos/">'
         . E(T('Termos de Uso e Política de Privacidade')) . '</a></p>'
         . '<address>' . E(T('Av. Paulista, 1106, 16º andar, Bela Vista, São Paulo - SP')) . '<br>'
         . '<a href="mailto:info@pignoro.com">info@pignoro.com</a></address>'

@@ -52,10 +52,10 @@ return [
     // Proxies da própria infraestrutura na frente do site (proxy reverso, rede do Docker).
     // Quando a conexão chega de uma destas redes, o site lê X-Forwarded-For de trás para a frente
     // para achar o visitante e aceita X-Forwarded-Proto para marcar o cookie de sessão como seguro.
-    // O padrão cobre só a própria máquina e as redes padrão do Docker. O mais seguro é trocar pelo
-    // endereço exato do proxy (ex.: '172.18.0.2/32'); esvazie a lista se não houver proxy.
+    // Em produção o HAProxy do servidor chega ao contêiner pelo gateway do Docker, 172.17.0.1
+    // (conferido no log do Apache). O endereço local fica para testes na própria máquina.
     // O proxy precisa acrescentar o endereço de quem conectou ao X-Forwarded-For, e não repassar o que recebeu.
-    'proxies_confiaveis' => ['127.0.0.0/8', '::1/128', '172.16.0.0/12'],
+    'proxies_confiaveis' => ['172.17.0.1/32', '127.0.0.0/8', '::1/128'],
 
     // Redes do Cloudflare (https://www.cloudflare.com/ips/). O IP informado no cabeçalho
     // CF-Connecting-IP só é aceito quando a conexão chega de uma destas redes.
