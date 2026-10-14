@@ -11,7 +11,7 @@ $User = RequireRole('cliente');
 PageHead('Arquivos', 'arquivos.php');
 ?>
 <h1>Arquivos</h1>
-<p class="page-intro">Documentos enviados pela Pignoro. Eles ficam cifrados no servidor e só são abertos aqui, no seu navegador.</p>
+<p class="page-intro">Documentos enviados pela Pignoro. Eles ficam cifrados no servidor e só são abertos aqui, no seu navegador. <a href="ajuda.php">Como funciona</a></p>
 <form id="form-destravar" class="pform card-box" hidden novalidate>
     <p class="pfield-wide">Para abrir os arquivos neste navegador, confirme a sua senha.</p>
     <label class="pfield pfield-wide"><span>Senha</span><input type="password" name="senha" autocomplete="current-password" required></label>

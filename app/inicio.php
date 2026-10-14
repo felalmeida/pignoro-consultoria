@@ -567,9 +567,9 @@ function PageHead(string $v_Title, string $v_Active = ''): void
         $Nav = ['painel.php' => 'Início', 'mensagens.php' => 'Mensagens', 'arquivos.php' => 'Arquivos',
             'cadastro.php' => 'Cadastro', 'registros.php?tipo=contatos' => 'Contatos',
             'registros.php?tipo=creditos' => 'Créditos', 'registros.php?tipo=operacoes' => 'Operações',
-            'conta.php' => 'Minha conta'];
+            'conta.php' => 'Minha conta', 'ajuda.php' => 'Ajuda'];
     elseif ($User !== null)
-        $Nav = ['admin/index.php' => 'Clientes', 'conta.php' => 'Minha conta'];
+        $Nav = ['admin/index.php' => 'Clientes', 'conta.php' => 'Minha conta', 'ajuda.php' => 'Ajuda'];
 
     header('Content-Type: text/html; charset=utf-8');
     echo '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">'
@@ -579,7 +579,7 @@ function PageHead(string $v_Title, string $v_Active = ''): void
         . '<title>' . E($v_Title) . ' | Pignoro</title>'
         . '<link rel="icon" href="' . $Root . 'assets/img/logo.svg" type="image/svg+xml">'
         . '<link rel="stylesheet" href="' . $Root . 'assets/css/site.css?v=1">'
-        . '<link rel="stylesheet" href="' . $Root . 'assets/css/portal.css?v=1">'
+        . '<link rel="stylesheet" href="' . $Root . 'assets/css/portal.css?v=2">'
         . '<script defer src="' . $Root . 'assets/js/portal.js?v=1"></script>'
         . '</head><body class="portal" data-api="' . $Root . 'cliente/api.php">';
 
